@@ -37,15 +37,26 @@ def _transfer(**kwargs):
     """
     engine = create_engine(ready_data_db_uri)
     conn = engine.connect()
-    df = pd.read_sql(
-        sa_text(sql),
-        conn
-    )
+    df = pd.read_sql(sa_text(sql), conn)
     # 取地區
-    df['dist'] = df['address'].str.extract(r'(.{2,3}區)')
+    df["dist"] = df["address"].str.extract(r"(.{2,3}區)")
     df["data_time"] = get_tpe_now_time_str(is_with_tz=True)
 
-    df = df[["case_id", "type", "date", "time", "location", "address", "wkb_geometry", "begin_when", "epoch_time", "dist",'data_time']]
+    df = df[
+        [
+            "case_id",
+            "type",
+            "date",
+            "time",
+            "location",
+            "address",
+            "wkb_geometry",
+            "begin_when",
+            "epoch_time",
+            "dist",
+            "data_time",
+        ]
+    ]
     # Load
     ready_data = df.copy()
 
@@ -61,6 +72,7 @@ def _transfer(**kwargs):
     update_lasttime_in_data_to_dataset_info(engine, dag_id, lasttime_in_data)
 
 
-
-dag = CommonDag(proj_folder="proj_city_dashboard", dag_folder="merge_crime_type_by_dist")
+dag = CommonDag(
+    proj_folder="proj_city_dashboard", dag_folder="merge_crime_type_by_dist"
+)
 dag.create_dag(etl_func=_transfer)

@@ -5,7 +5,8 @@ from sqlalchemy import create_engine
 from utils.extract_stage import get_current_rid_from_page_id, get_data_taipei_api
 from utils.load_stage import (
     save_geodataframe_to_postgresql,
-    update_lasttime_in_data_to_dataset_info, save_dataframe_to_postgresql
+    update_lasttime_in_data_to_dataset_info,
+    save_dataframe_to_postgresql,
 )
 from datetime import datetime
 from utils.transform_address import (
@@ -22,7 +23,6 @@ dag_id = "env_srv_energy_subsidy"
 
 
 def _transfer(**kwargs):
-
 
     ##############
     ## get config
@@ -47,7 +47,6 @@ def _transfer(**kwargs):
     print(raw_data)
     # raw_data["data_time"] = raw_data["_importdate"].iloc[0]["date"]
 
-
     ##############
     ## Transform
     ##############
@@ -65,7 +64,6 @@ def _transfer(**kwargs):
         }
     )
 
-
     # 將民國年份轉為西元年份
     data["data_time"] = data["data_year"].astype(int) + 1911
 
@@ -75,17 +73,26 @@ def _transfer(**kwargs):
     # 將 datetime 格式轉為指定的字串格式，並加上固定時區偏移
     data["data_time"] = data["data_time"].dt.strftime("%Y-%m-%d %H:%M:%S+08")
 
-
     print(data)
     # 整數轉換
-    data["num_of_approval"] = data["num_of_approval"].apply(lambda x:x.replace(",","")).astype('int')
-    data["acc_num_of_approval"] = data["acc_num_of_approval"].apply(lambda x:x.replace(",","")).astype('int')
-    data["subsidy_amt"] = data["subsidy_amt"].apply(lambda x:x.replace(",","")).astype('int')
-    data["acc_subsidy_amt"] = data["acc_subsidy_amt"].apply(lambda x:x.replace(",","")).astype('int')
-    data["enegry_saving_amt"] = data["enegry_saving_amt"].apply(lambda x:x.replace(",","")).astype('int')
-    data["acc_enegry_saving_amt"] = data["acc_enegry_saving_amt"].apply(lambda x:x.replace(",","")).astype('int')
-
-    
+    data["num_of_approval"] = (
+        data["num_of_approval"].apply(lambda x: x.replace(",", "")).astype("int")
+    )
+    data["acc_num_of_approval"] = (
+        data["acc_num_of_approval"].apply(lambda x: x.replace(",", "")).astype("int")
+    )
+    data["subsidy_amt"] = (
+        data["subsidy_amt"].apply(lambda x: x.replace(",", "")).astype("int")
+    )
+    data["acc_subsidy_amt"] = (
+        data["acc_subsidy_amt"].apply(lambda x: x.replace(",", "")).astype("int")
+    )
+    data["enegry_saving_amt"] = (
+        data["enegry_saving_amt"].apply(lambda x: x.replace(",", "")).astype("int")
+    )
+    data["acc_enegry_saving_amt"] = (
+        data["acc_enegry_saving_amt"].apply(lambda x: x.replace(",", "")).astype("int")
+    )
 
     # # standardize time
     # data["etl_dtm"] = convert_str_to_time_format(data["etl_dtm"])
@@ -112,18 +119,15 @@ def _transfer(**kwargs):
     # )
 
     keep_col = [
-            "data_time",
-            "data_year",
-             "num_of_approval",
-             "acc_num_of_approval",
-             "subsidy_amt",
-             "acc_subsidy_amt",
-             "enegry_saving_amt",
-             "acc_enegry_saving_amt"
+        "data_time",
+        "data_year",
+        "num_of_approval",
+        "acc_num_of_approval",
+        "subsidy_amt",
+        "acc_subsidy_amt",
+        "enegry_saving_amt",
+        "acc_enegry_saving_amt",
     ]
-
-
-
 
     # select columns
     ready_data = data[keep_col]
@@ -143,5 +147,5 @@ def _transfer(**kwargs):
     # update_lasttime_in_data_to_dataset_info(engine, dag_id, lasttime_in_data)
 
 
-dag = CommonDag(proj_folder="proj_city_dashboard", dag_folder= dag_id)
+dag = CommonDag(proj_folder="proj_city_dashboard", dag_folder=dag_id)
 dag.create_dag(etl_func=_transfer)

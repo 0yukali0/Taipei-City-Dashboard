@@ -46,9 +46,7 @@ def _R0088(**kwargs):
     TIME_OUT = 60
 
     # Extract
-    res = requests.post(
-        URL, headers=HEADERS, data=PAYLOAD, timeout=TIME_OUT
-    )
+    res = requests.post(URL, headers=HEADERS, data=PAYLOAD, timeout=TIME_OUT)
     res.raise_for_status()
     res_text = res.text
     r_split = res_text.split("<getCarWeightBRInfoResult>")[1]

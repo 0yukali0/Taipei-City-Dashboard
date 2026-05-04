@@ -2,6 +2,7 @@ from airflow import DAG
 from operators.common_pipeline import CommonDag
 import pandas as pd
 
+
 def convert_vaccine_symbols(value):
     """Convert vaccine availability symbols to binary values.
 
@@ -13,7 +14,7 @@ def convert_vaccine_symbols(value):
     s = str(value).strip()
     if not s:
         return 0
-    if s == '1' or s == '◎' or '◎' in s:
+    if s == "1" or s == "◎" or "◎" in s:
         return 1
     return 0
 
@@ -57,28 +58,32 @@ def _transfer(**kwargs):
     # Rename
     data = raw_data.copy()
     data = data.drop(columns=["_id", "_importdate"])
-    
 
-    data = data.rename(columns={
-        "院所名稱": "name",
-        "幼兒流感3歲以下": "flu_u3_child",
-        "幼兒流感3歲以上": "flu_o3_child",
-        "成人流感": "flu_adult",
-        "地址": "address",
-        "電話": "tel",
-    })
-    area_candidates = data['address'].str.slice(3, 6)
-    data['district'] = area_candidates.apply(lambda x: x if x.endswith('區') else None)
+    data = data.rename(
+        columns={
+            "院所名稱": "name",
+            "幼兒流感3歲以下": "flu_u3_child",
+            "幼兒流感3歲以上": "flu_o3_child",
+            "成人流感": "flu_adult",
+            "地址": "address",
+            "電話": "tel",
+        }
+    )
+    area_candidates = data["address"].str.slice(3, 6)
+    data["district"] = area_candidates.apply(lambda x: x if x.endswith("區") else None)
 
     cols = ["flu_u3_child", "flu_o3_child", "flu_adult"]
     for col in cols:
         data[col] = data[col].apply(convert_vaccine_symbols)
-        
+
     # 先根據疫苗三欄判斷要不要保留
-    mask = (data["flu_u3_child"] == 1) | (data["flu_o3_child"] == 1) | (data["flu_adult"] == 1)
+    mask = (
+        (data["flu_u3_child"] == 1)
+        | (data["flu_o3_child"] == 1)
+        | (data["flu_adult"] == 1)
+    )
 
     df_filtered = data.loc[mask].copy()
-
 
     addr = df_filtered["address"]
     addr_cleaned = clean_data(addr)
@@ -105,9 +110,7 @@ def _transfer(**kwargs):
         history_table=history_table,
         geometry_type=GEOMETRY_TYPE,
     )
-    update_lasttime_in_data_to_dataset_info(
-            engine, dag_id, df["data_time"].max()
-        )
+    update_lasttime_in_data_to_dataset_info(engine, dag_id, df["data_time"].max())
 
 
 dag = CommonDag(proj_folder="proj_city_dashboard", dag_folder="flu_hospitals_tpe")

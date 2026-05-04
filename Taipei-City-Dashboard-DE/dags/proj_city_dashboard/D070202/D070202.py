@@ -1,6 +1,7 @@
 from airflow import DAG
 from operators.common_pipeline import CommonDag
 
+
 def D070202(**kwargs):
     import pandas as pd
     from sqlalchemy import create_engine
@@ -10,7 +11,7 @@ def D070202(**kwargs):
     )
     from utils.transform_time import convert_str_to_time_format
     from utils.get_time import get_tpe_now_time_str
-    
+
     # Config
     ready_data_db_uri = kwargs.get("ready_data_db_uri")
     dag_infos = kwargs.get("dag_infos")
@@ -19,8 +20,8 @@ def D070202(**kwargs):
     default_table = dag_infos.get("ready_data_default_table")
 
     # 20250818 來源api 改為csv檔案
-    url = 'https://tsis.dbas.gov.taipei/statis/webMain.aspx?sys=220&ymf=5700&kind=21&type=0&funid=A05035701&cycle=4&outmode=12&compmode=0&outkind=1&deflst=2&nzo=1'
-    ENCODING = 'utf-8-sig'
+    url = "https://tsis.dbas.gov.taipei/statis/webMain.aspx?sys=220&ymf=5700&kind=21&type=0&funid=A05035701&cycle=4&outmode=12&compmode=0&outkind=1&deflst=2&nzo=1"
+    ENCODING = "utf-8-sig"
     raw_data = pd.read_csv(url, encoding=ENCODING)
 
     # Extract

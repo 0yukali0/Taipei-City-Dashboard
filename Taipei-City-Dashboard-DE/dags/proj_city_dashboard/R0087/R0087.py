@@ -43,9 +43,7 @@ def _R0087(**kwargs):
     TIME_OUT = 60
 
     # Extract
-    res = requests.post(
-        URL, headers=HEADERS, data=PAYLOAD, timeout=TIME_OUT
-    )
+    res = requests.post(URL, headers=HEADERS, data=PAYLOAD, timeout=TIME_OUT)
     res.raise_for_status()
     res_text = res.text
     res_text = res_text.split("<")[0]

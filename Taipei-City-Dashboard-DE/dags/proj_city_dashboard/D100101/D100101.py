@@ -33,7 +33,7 @@ def D100101(**kwargs):
         main_process,
         save_data,
     )
-    
+
     # Config
     # Retrieve all kwargs automatically generated upon DAG initialization
     raw_data_db_uri = kwargs.get("raw_data_db_uri")
@@ -100,7 +100,8 @@ def D100101(**kwargs):
     # StringDataRightTruncation。
     if "extension" in data.columns:
         data["extension"] = (
-            data["extension"].astype(str)
+            data["extension"]
+            .astype(str)
             .str.replace(r"\s+", " ", regex=True)
             .str.strip()
             .str[:20]
@@ -140,7 +141,7 @@ def D100101(**kwargs):
     )
     # Time
     data["data_time"] = convert_str_to_time_format(data["data_time"])
-   
+
     # Reshape
     ready_data = gdata.drop(columns=["lng", "lat", "geometry", "cellphone"])
 

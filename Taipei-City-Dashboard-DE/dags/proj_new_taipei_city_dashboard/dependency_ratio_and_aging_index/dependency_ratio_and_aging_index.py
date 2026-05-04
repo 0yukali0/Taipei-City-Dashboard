@@ -20,12 +20,11 @@ def _transfer(**kwargs):
     load_behavior = dag_infos.get("load_behavior")
     default_table = dag_infos.get("ready_data_default_table")
     history_table = dag_infos.get("ready_data_history_table")
-    RID= "8308ab58-62d1-424e-8314-24b65b7ab492"
+    RID = "8308ab58-62d1-424e-8314-24b65b7ab492"
     client = NewTaipeiAPIClient(RID, input_format="json")
     res = client.get_all_data(size=1000)
     raw_data = pd.DataFrame(res)
     print(f"raw data =========== {raw_data.head()}")
-
 
     data = raw_data.copy()
     # ** 只保留 "新北市...計" 的資料 (全市合計)**
@@ -53,11 +52,18 @@ def _transfer(**kwargs):
     # ** 重新排列欄位順序**
     data = data[
         [
-            "end_of_year", "young_population", "young_population_percentage",
-            "working_age_population", "working_age_population_percentage",
-            "elderly_population", "elderly_population_percentage",
-            "elderly_dependency_ratio", "youth_dependency_ratio",
-            "total_dependency_ratio", "aging_index", "data_time"
+            "end_of_year",
+            "young_population",
+            "young_population_percentage",
+            "working_age_population",
+            "working_age_population_percentage",
+            "elderly_population",
+            "elderly_population_percentage",
+            "elderly_dependency_ratio",
+            "youth_dependency_ratio",
+            "total_dependency_ratio",
+            "aging_index",
+            "data_time",
         ]
     ]
     print(f"ready_data =========== {data.head()}")
@@ -70,9 +76,11 @@ def _transfer(**kwargs):
         default_table=default_table,
         history_table=history_table,
     )
-    update_lasttime_in_data_to_dataset_info(
-            engine, dag_id, data["data_time"].max()
-        )
+    update_lasttime_in_data_to_dataset_info(engine, dag_id, data["data_time"].max())
 
-dag = CommonDag(proj_folder="proj_new_taipei_city_dashboard", dag_folder="dependency_ratio_and_aging_index")
+
+dag = CommonDag(
+    proj_folder="proj_new_taipei_city_dashboard",
+    dag_folder="dependency_ratio_and_aging_index",
+)
 dag.create_dag(etl_func=_transfer)

@@ -1,6 +1,7 @@
 from airflow import DAG
 from operators.common_pipeline import CommonDag
 
+
 def D100103(**kwargs):
     import pandas as pd
     from sqlalchemy import create_engine
@@ -20,46 +21,58 @@ def D100103(**kwargs):
 
     # Extract
     # 20250818 來源api 改為csv檔案
-    url = 'https://tsis.dbas.gov.taipei/statis/webMain.aspx?sys=220&ymf=9800&kind=21&type=0&funid=a05900201&cycle=4&outmode=12&compmode=0&outkind=1&deflst=2&nzo=1'
-    ENCODING = 'utf-8-sig'
+    url = "https://tsis.dbas.gov.taipei/statis/webMain.aspx?sys=220&ymf=9800&kind=21&type=0&funid=a05900201&cycle=4&outmode=12&compmode=0&outkind=1&deflst=2&nzo=1"
+    ENCODING = "utf-8-sig"
     raw_data = pd.read_csv(url, encoding=ENCODING)
     data = raw_data.copy()
     # Transform
     # Clean up year column
-    data['year'] = data['統計期'].str.replace(r'[^\d]', '', regex=True)
+    data["year"] = data["統計期"].str.replace(r"[^\d]", "", regex=True)
     data["year"] = data["year"].apply(lambda x: int(x) + 1911)
-    
+
     # Reshape from wide to long format
     # Create records for each gender category
     records = []
-    
+
     for _, row in data.iterrows():
-        year = row['year']
-        
+        year = row["year"]
+
         # Total
-        records.append({
-            'year': year,
-            'category': '總計',
-            'parental_leave_count': row['就業保險育嬰留職停薪津貼初次核付人數[人]/ 總計']
-        })
-        
+        records.append(
+            {
+                "year": year,
+                "category": "總計",
+                "parental_leave_count": row[
+                    "就業保險育嬰留職停薪津貼初次核付人數[人]/ 總計"
+                ],
+            }
+        )
+
         # Male
-        records.append({
-            'year': year,
-            'category': '男',
-            'parental_leave_count': row['就業保險育嬰留職停薪津貼初次核付人數[人]/ 男']
-        })
-        
+        records.append(
+            {
+                "year": year,
+                "category": "男",
+                "parental_leave_count": row[
+                    "就業保險育嬰留職停薪津貼初次核付人數[人]/ 男"
+                ],
+            }
+        )
+
         # Female
-        records.append({
-            'year': year,
-            'category': '女',
-            'parental_leave_count': row['就業保險育嬰留職停薪津貼初次核付人數[人]/ 女']
-        })
-    
+        records.append(
+            {
+                "year": year,
+                "category": "女",
+                "parental_leave_count": row[
+                    "就業保險育嬰留職停薪津貼初次核付人數[人]/ 女"
+                ],
+            }
+        )
+
     # Create new dataframe from records
     data = pd.DataFrame(records)
-    
+
     # Convert data types
     data["year"] = data["year"].astype(int)
     data["parental_leave_count"] = data["parental_leave_count"].astype(int)

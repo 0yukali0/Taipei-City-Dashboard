@@ -28,7 +28,6 @@ def _R0076(**kwargs):
     file_name = f"{dag_id}.json"
     FROM_CRS = 4326
 
-
     # Extract
     # download file
     local_file = download_file(file_name, URL, is_proxy=False)

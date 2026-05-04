@@ -1,6 +1,6 @@
 from airflow import DAG
 from operators.common_pipeline import CommonDag
-from datetime import datetime,timedelta,timezone
+from datetime import datetime, timedelta, timezone
 import pandas as pd
 import requests
 from settings.global_config import PROXIES
@@ -15,6 +15,7 @@ from airflow.models import Variable
 import json
 import logging
 
+
 def _cht_e2(**kwargs):
     # Config
     ready_data_db_uri = kwargs.get("ready_data_db_uri")
@@ -26,43 +27,52 @@ def _cht_e2(**kwargs):
     cht = CHTAuth()
     access_token = cht.get_token(now_time)
     url = Variable.get("E2_API_URL")
-    headers = {
-        'Content-Type': 'application/json',
-        'User-Agent': 'curl/7.68.0'
-        }   
+    headers = {"Content-Type": "application/json", "User-Agent": "curl/7.68.0"}
     data_frames = []
-    stay_mins = [10,30,60]
-    today = datetime.strftime(datetime.now(timezone(timedelta(seconds=28800))), "%Y%m%d")
+    stay_mins = [10, 30, 60]
+    today = datetime.strftime(
+        datetime.now(timezone(timedelta(seconds=28800))), "%Y%m%d"
+    )
     for mins in stay_mins:
-        payload = json.dumps({
-            "token": access_token,
-            "yyyymmdd": today,
-            "stay_mins": mins,
-            "api_id": "30"
-        })
+        payload = json.dumps(
+            {
+                "token": access_token,
+                "yyyymmdd": today,
+                "stay_mins": mins,
+                "api_id": "30",
+            }
+        )
         resp = requests.post(url, headers=headers, data=payload, verify=False)
         if resp.status_code != 200:
-            logging.error(f"Request failed for stay_mins={mins} with status code {resp.status_code}. Response: {resp.text}")
+            logging.error(
+                f"Request failed for stay_mins={mins} with status code {resp.status_code}. Response: {resp.text}"
+            )
             continue
-            
+
         res = resp.json()
-        if res['status'] == 1:
+        if res["status"] == 1:
             data = res.get("data", [])
             if data:
                 df = pd.DataFrame(data)
-                df["status"] = res['status']
-                df["api_id"] = res['api_id']
-                df['data_time'] = get_tpe_now_time_str()
-                df['msg'] = res['msg']
+                df["status"] = res["status"]
+                df["api_id"] = res["api_id"]
+                df["data_time"] = get_tpe_now_time_str()
+                df["msg"] = res["msg"]
                 df["stay_mins"] = mins  # 添加停留時間作為欄位
                 data_frames.append(df)
-                logging.info(f"Successfully collected data for stay_mins={mins}, rows: {len(df)}")
+                logging.info(
+                    f"Successfully collected data for stay_mins={mins}, rows: {len(df)}"
+                )
         else:
-            logging.warning(f"API returned status {res['status']} for stay_mins={mins}. Message: {res.get('msg', 'No message')}")
+            logging.warning(
+                f"API returned status {res['status']} for stay_mins={mins}. Message: {res.get('msg', 'No message')}"
+            )
 
     # 檢查是否有收集到任何資料
     if not data_frames:
-        logging.error("No data frames collected. All API requests failed or returned no data.")
+        logging.error(
+            "No data frames collected. All API requests failed or returned no data."
+        )
         return {"status": "error", "message": "No data collected"}
 
     # 合併所有收集到的資料
@@ -79,8 +89,9 @@ def _cht_e2(**kwargs):
         default_table=default_table,
     )
     update_lasttime_in_data_to_dataset_info(
-            engine, dag_id, combined_df["data_time"].max()
-        )
+        engine, dag_id, combined_df["data_time"].max()
+    )
+
 
 dag = CommonDag(proj_folder="proj_city_dashboard", dag_folder="cht_e2")
 dag.create_dag(etl_func=_cht_e2)

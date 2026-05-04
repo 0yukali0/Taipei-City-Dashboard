@@ -19,7 +19,7 @@ def _transfer(**kwargs):
     load_behavior = dag_infos.get("load_behavior")
     default_table = dag_infos.get("ready_data_default_table")
     history_table = dag_infos.get("ready_data_history_table")
-    RID= "c285509a-7fb2-434f-8542-0b4986c337a8"
+    RID = "c285509a-7fb2-434f-8542-0b4986c337a8"
     client = NewTaipeiAPIClient(RID, input_format="json")
     res = client.get_all_data(size=1000)
     raw_data = pd.DataFrame(res)
@@ -77,16 +77,36 @@ def _transfer(**kwargs):
             male_val = row[male_col]
             female_val = row[female_col]
             total_val = round(male_val + female_val, 2)
-            rows.append({"year": year, "gender": "男", "age_structure": age_label, "percentage": male_val})
-            rows.append({"year": year, "gender": "女", "age_structure": age_label, "percentage": female_val})
-            rows.append({"year": year, "gender": "總計", "age_structure": age_label, "percentage": total_val})
+            rows.append(
+                {
+                    "year": year,
+                    "gender": "男",
+                    "age_structure": age_label,
+                    "percentage": male_val,
+                }
+            )
+            rows.append(
+                {
+                    "year": year,
+                    "gender": "女",
+                    "age_structure": age_label,
+                    "percentage": female_val,
+                }
+            )
+            rows.append(
+                {
+                    "year": year,
+                    "gender": "總計",
+                    "age_structure": age_label,
+                    "percentage": total_val,
+                }
+            )
 
     melted_data = pd.DataFrame(rows)
     melted_data["data_time"] = get_tpe_now_time_str(is_with_tz=True)
 
     print(f"ready_data =========== {melted_data.head(10)}")
 
-    
     engine = create_engine(ready_data_db_uri)
     save_dataframe_to_postgresql(
         engine,
@@ -95,8 +115,11 @@ def _transfer(**kwargs):
         default_table=default_table,
     )
     update_lasttime_in_data_to_dataset_info(
-            engine, dag_id, melted_data["data_time"].max()
-        )
+        engine, dag_id, melted_data["data_time"].max()
+    )
 
-dag = CommonDag(proj_folder="proj_new_taipei_city_dashboard", dag_folder="employment_age_structure")
+
+dag = CommonDag(
+    proj_folder="proj_new_taipei_city_dashboard", dag_folder="employment_age_structure"
+)
 dag.create_dag(etl_func=_transfer)

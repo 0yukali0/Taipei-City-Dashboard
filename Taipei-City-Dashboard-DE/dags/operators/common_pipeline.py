@@ -7,7 +7,7 @@ from datetime import datetime
 
 from airflow import DAG
 from airflow.models import Variable
-from airflow.operators.empty import EmptyOperator  
+from airflow.operators.empty import EmptyOperator
 from airflow.operators.python import PythonOperator
 from airflow.providers.postgres.hooks.postgres import PostgresHook
 from settings.global_config import DAG_PATH, DATA_PATH, PROXIES
@@ -16,8 +16,9 @@ from sqlalchemy.sql import text as sa_text
 from utils.get_time import get_tpe_now_time
 
 import sys
-if '/opt/airflow/dags' not in sys.path:
-    sys.path.insert(0, '/opt/airflow/dags')
+
+if "/opt/airflow/dags" not in sys.path:
+    sys.path.insert(0, "/opt/airflow/dags")
 
 
 def _expand_cron_field(field, max_value):
@@ -133,6 +134,7 @@ def _assign_queue(schedule, dag_id):
     if _is_monthly_or_more(schedule):
         return "heavy"
     return "default"
+
 
 def _read_config(path, file_name="job_config.json"):
     """
@@ -265,7 +267,7 @@ def _create_or_update_dataset_info(psql_uri, config, proj_folder):
     update_resourece_updatetime_sql = f"""
         UPDATE dataset_info
         SET resource_updatetime = '{resource_updatetime}'
-        WHERE {unique_column} = '{info['id']}'
+        WHERE {unique_column} = '{info["id"]}'
     """
     # execute
     engine = create_engine(psql_uri)
@@ -282,7 +284,7 @@ class CommonDag:
         self.data_path = DATA_PATH
         self.dag_path = os.path.join(DAG_PATH, proj_folder, dag_folder)
         self.config = _read_config(self.dag_path)
-        self.proj_folder = proj_folder 
+        self.proj_folder = proj_folder
         _validate_config(self.config)
 
         self.proxies = PROXIES
@@ -354,11 +356,20 @@ class CommonDag:
             update_dataset_info = PythonOperator(
                 task_id="update_dataset_info",
                 python_callable=_create_or_update_dataset_info,
-                op_kwargs={"psql_uri": self.ready_data_db_uri, "config": self.config,"proj_folder":self.proj_folder},
+                op_kwargs={
+                    "psql_uri": self.ready_data_db_uri,
+                    "config": self.config,
+                    "proj_folder": self.proj_folder,
+                },
             )
 
             dag_execution_success = EmptyOperator(task_id="dag_execution_success")
 
             # Pipeline
-            get_and_validate_config >> etl >> update_dataset_info >> dag_execution_success
+            (
+                get_and_validate_config
+                >> etl
+                >> update_dataset_info
+                >> dag_execution_success
+            )
         return dag

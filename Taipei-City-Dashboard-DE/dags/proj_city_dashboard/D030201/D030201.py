@@ -27,7 +27,7 @@ def _D030201(**kwargs):
             url_list[file_tag] = rid
         return url_list
 
-    def get_existing_data(ready_data_db_uri, table_name, column='file_tag'):
+    def get_existing_data(ready_data_db_uri, table_name, column="file_tag"):
         engine = create_engine(ready_data_db_uri)
         sql = f"select distinct {column} from {table_name}"
         existing_tag = pd.read_sql(sql, engine).iloc[:, 0]

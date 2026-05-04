@@ -16,6 +16,7 @@ from settings.global_config import DATA_PATH, PROXIES
 from utils.auth_tdx import TDXAuth
 import math
 
+
 def download_file(
     file_name,
     url,
@@ -193,28 +194,28 @@ def get_kml(url, dag_id, from_crs, **kwargs):
 
     """
     file_name = f"{dag_id}.kml"
-    
+
     # Enable KML support in fiona
     try:
         fiona.drvsupport.supported_drivers["KML"] = "rw"
     except AttributeError:
         # For newer fiona versions that don't have drvsupport
         pass
-    
+
     file = download_file(file_name, url, **kwargs)
-    
+
     # Use fiona directly to avoid the geopandas._is_zip issue
     try:
-        with fiona.open(file, driver='KML') as src:
+        with fiona.open(file, driver="KML") as src:
             gdf = gpd.GeoDataFrame.from_features(src, crs=src.crs)
     except Exception:
         # Fallback to the original method for older versions
         gdf = gpd.read_file(file, driver="KML")
-    
+
     # Ensure the CRS is set correctly
     if gdf.crs is None:
         gdf = gpd.GeoDataFrame(gdf, crs=f"EPSG:{from_crs}")
-    
+
     return gdf
 
 
@@ -464,9 +465,8 @@ def get_moenv_json_data(
 
     return results
 
-def get_shp_files_merge(
-    url, dag_id, encoding="UTF-8", file_ends_with=".shp", **kwargs
-):
+
+def get_shp_files_merge(url, dag_id, encoding="UTF-8", file_ends_with=".shp", **kwargs):
     """
     下載 ZIP 並解壓縮，讀取所有 SHP 檔案，加入 category 欄位（檔名），然後合併。
     回傳合併後的 GeoDataFrame。
@@ -483,7 +483,7 @@ def get_shp_files_merge(
 
     import fiona
     from shapely.geometry import shape
-    
+
     dfs = []
     for shp_path in all_shp_files:
         category = os.path.splitext(os.path.basename(shp_path))[0]
@@ -563,7 +563,7 @@ def get_shp_file(
     # 使用 fiona 直接開啟以避免 fiona.path 問題
     import fiona
     from shapely.geometry import shape
-    
+
     with fiona.open(shp_file, encoding=encoding) as src:
         records = []
         geometries = []
@@ -573,7 +573,7 @@ def get_shp_file(
             records.append(props)
             geometries.append(shape(geom) if geom else None)
         gdf = gpd.GeoDataFrame(records, geometry=geometries, crs=f"EPSG:{from_crs}")
-    
+
     print(f"Read {shp_file} successfully.")
     return gdf
 
@@ -697,7 +697,7 @@ def get_geojson_file(url, dag_id, from_crs, encoding="UTF-8", **kwargs):
 
         URL = "https://soil.taipei/Taipei/Main/pages/TPLiquid_84.GeoJSON"
         FROM_CRS = 4326
-        DAG_ID = 'D050101_1' 
+        DAG_ID = 'D050101_1'
         raw_data = get_geojson_file(URL, DAG_ID, FROM_CRS)
         print(raw_data.iloc[0])
         ```
@@ -710,14 +710,14 @@ def get_geojson_file(url, dag_id, from_crs, encoding="UTF-8", **kwargs):
         ```
     """
     from shapely.geometry import shape
-    
+
     file_name = f"{dag_id}.geojson"
     local_file = download_file(file_name, url, **kwargs)
-    
+
     # 使用 json 模組讀取 GeoJSON，避免 fiona 版本問題
     with open(local_file, encoding=encoding) as f:
         geojson_data = json.load(f)
-    
+
     features = geojson_data.get("features", [])
     if features:
         rows = []
@@ -730,9 +730,10 @@ def get_geojson_file(url, dag_id, from_crs, encoding="UTF-8", **kwargs):
         gdf = gpd.GeoDataFrame(rows, geometry=geometries, crs=f"EPSG:{from_crs}")
     else:
         gdf = gpd.GeoDataFrame()
-    
+
     print(f"Read {local_file} successfully.")
     return gdf
+
 
 class NewTaipeiAPIClient:
     """
@@ -783,13 +784,13 @@ class NewTaipeiAPIClient:
     def get_data(self, **params):
         """
         Retrieve data from the API with optional query parameters.
-        
+
         Args:
             **params: Additional query parameters (e.g., page, size).
-            
+
         Returns:
             list: Converted data.
-            
+
         Example:
             client = NewTaipeiAPIClient("your-resource-id", input_format="csv")
             data = client.get_data(page=2, size=1000)
@@ -805,13 +806,13 @@ class NewTaipeiAPIClient:
     def get_all_data(self, size=1000):
         """
         Retrieve all data by iterating through all available pages.
-        
+
         Args:
             size (int, optional): Number of records per page. Defaults to 1000.
-            
+
         Returns:
             list: All data aggregated from all pages.
-            
+
         Example:
             client = NewTaipeiAPIClient("your-resource-id", input_format="json")
             all_data = client.get_all_data(size=1000)
@@ -832,8 +833,6 @@ class NewTaipeiAPIClient:
             page += 1
 
         return all_data
-
-
 
 
 class TaipeiTravelAPIClient:
@@ -885,26 +884,25 @@ class TaipeiTravelAPIClient:
     def get_a_data(self, page=1, **params):
         """
         Retrieve data from the API with optional query parameters.
-        
+
         Args:
             page (int, optional): Page number. Defaults to 0.
             **params: Additional query parameters.
-            
+
         Returns:
             list: Converted data.
-            
+
         Example:
             client = TaipeiTravelAPIClient("your-path", input_format="json")
             data = client.get_a_data(page=2)
             print(data)
         """
         url = f"{self.BASE_URL}{self.path}"
-        params['page'] = page
-        headers = {
-            "Accept": f"application/json",
-            "User-Agent": "Mozilla/5.0"
-        }
-        response = requests.get(url, params=params, headers=headers, timeout=self.timeout, proxies=PROXIES)
+        params["page"] = page
+        headers = {"Accept": f"application/json", "User-Agent": "Mozilla/5.0"}
+        response = requests.get(
+            url, params=params, headers=headers, timeout=self.timeout, proxies=PROXIES
+        )
         response.raise_for_status()  # Ensure the request was successful
 
         # Use the appropriate handler to convert the response.
@@ -913,13 +911,13 @@ class TaipeiTravelAPIClient:
     def get_all_data(self):
         """
         Retrieve all data by iterating through all available pages.
-        
+
         Args:
             size (int, optional): Number of records per page. Defaults to 1000.
-            
+
         Returns:
             list: All data aggregated from all pages.
-            
+
         Example:
             client = TaipeiTravelAPIClient("your-path", input_format="json")
             all_data = client.get_all_data(size=1000)
@@ -935,8 +933,10 @@ class TaipeiTravelAPIClient:
                 print(f"Error fetching page {page}: {e}")
                 break
                 # 每頁30筆
-            total_page = math.ceil(raw_data.get('total') / 30) 
-            all_data.extend(raw_data.get('data', []))  # Assuming 'data' is the key for the actual records
+            total_page = math.ceil(raw_data.get("total") / 30)
+            all_data.extend(
+                raw_data.get("data", [])
+            )  # Assuming 'data' is the key for the actual records
             page += 1
             if page == total_page:
                 break

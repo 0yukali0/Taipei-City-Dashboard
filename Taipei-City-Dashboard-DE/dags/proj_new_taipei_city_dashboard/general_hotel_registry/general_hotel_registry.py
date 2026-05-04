@@ -34,29 +34,30 @@ def _general_hotel_registry(**kwargs):
     history_table = dag_infos.get("ready_data_history_table")
     geometry_type = "Point"
     FROM_CRS = 4326
-    URL = 'https://data.ntpc.gov.tw/api/datasets/8565597e-a174-4907-99c7-adb5ddee1326/csv/file'
+    URL = "https://data.ntpc.gov.tw/api/datasets/8565597e-a174-4907-99c7-adb5ddee1326/csv/file"
     response = requests.get(URL, verify=False)
     # 讀取 CSV
-    df = pd.read_csv(StringIO(response.text))    
+    df = pd.read_csv(StringIO(response.text))
     # Transform
-    
-    data = df.rename(columns={
-        "seqno": "license_number",
-        "localcallservice": "localcall",
-    })
+
+    data = df.rename(
+        columns={
+            "seqno": "license_number",
+            "localcallservice": "localcall",
+        }
+    )
     data["data_time"] = get_tpe_now_time_str(is_with_tz=True)
-    
+
     # 資料格式為"108臺北市萬華區昆明街142號7-8樓", 只取區
-    area_candidates = data['address'].str.slice(3, 6)
-    data['area'] = area_candidates.apply(lambda x: x if x.endswith('區') else None)
-    
+    area_candidates = data["address"].str.slice(3, 6)
+    data["area"] = area_candidates.apply(lambda x: x if x.endswith("區") else None)
+
     data["address"] = data["address"].str[3:]
     addr = data["address"]
     addr_cleaned = clean_data(addr)
     standard_addr_list = main_process(addr_cleaned)
     result, output = save_data(addr, addr_cleaned, standard_addr_list)
     data["address"] = output
-
 
     # get gis xy
     data["longitude"], data["latitude"] = get_addr_xy_parallel(output)
@@ -65,8 +66,23 @@ def _general_hotel_registry(**kwargs):
         data, x=data["longitude"], y=data["latitude"], from_crs=FROM_CRS
     )
     # select column
-    ready_data = gdata[["data_time", "license_number", "name", "address", "localcall", "button_price", "higher_price", "room", "area", "longitude", "latitude", "wkb_geometry"]]
-    
+    ready_data = gdata[
+        [
+            "data_time",
+            "license_number",
+            "name",
+            "address",
+            "localcall",
+            "button_price",
+            "higher_price",
+            "room",
+            "area",
+            "longitude",
+            "latitude",
+            "wkb_geometry",
+        ]
+    ]
+
     # Load
     engine = create_engine(ready_data_db_uri)
     save_geodataframe_to_postgresql(
@@ -81,5 +97,7 @@ def _general_hotel_registry(**kwargs):
     update_lasttime_in_data_to_dataset_info(engine, dag_id, lasttime_in_data)
 
 
-dag = CommonDag(proj_folder="proj_new_taipei_city_dashboard", dag_folder="general_hotel_registry")
+dag = CommonDag(
+    proj_folder="proj_new_taipei_city_dashboard", dag_folder="general_hotel_registry"
+)
 dag.create_dag(etl_func=_general_hotel_registry)

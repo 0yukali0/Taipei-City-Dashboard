@@ -8,9 +8,9 @@ def _extract_db_info(default_table, engine):
     existing_data = pd.read_sql(f"SELECT * FROM {default_table}", engine)
 
     # Filter columns
-    keep_col = ['county_name', 'vill_name', 'wkb_geometry']
+    keep_col = ["county_name", "vill_name", "wkb_geometry"]
     existing_data = existing_data[keep_col]
-    existing_data = existing_data[existing_data['county_name'] == '臺北市']
+    existing_data = existing_data[existing_data["county_name"] == "臺北市"]
     return existing_data
 
 
@@ -98,28 +98,28 @@ def D100106_2(**kwargs):
     }
     data.rename(columns=col_dict, inplace=True)
     # Set condition
-    condition = (data['district'].str.contains('里')) & (data['gender'] == '計')
+    condition = (data["district"].str.contains("里")) & (data["gender"] == "計")
     data = data[condition]
     # Rename district to village
-    data = data.rename(columns={'district': 'village'}, inplace=False)
+    data = data.rename(columns={"district": "village"}, inplace=False)
     # Extract district
-    data['district'] = data['district_code'].str[:8]
+    data["district"] = data["district_code"].str[:8]
     district_map = {
-        63000040: '中山區',
-        63000050: '中正區',
-        63000020: '信義區',
-        63000100: '內湖區',
-        63000120: '北投區',
-        63000090: '南港區',
-        63000110: '士林區',
-        63000060: '大同區',
-        63000030: '大安區',
-        63000080: '文山區',
-        63000010: '松山區',
-        63000070: '萬華區'
+        63000040: "中山區",
+        63000050: "中正區",
+        63000020: "信義區",
+        63000100: "內湖區",
+        63000120: "北投區",
+        63000090: "南港區",
+        63000110: "士林區",
+        63000060: "大同區",
+        63000030: "大安區",
+        63000080: "文山區",
+        63000010: "松山區",
+        63000070: "萬華區",
     }
-    data['district'] = data['district'].astype(int)
-    data['district'] = data['district'].map(district_map)
+    data["district"] = data["district"].astype(int)
+    data["district"] = data["district"].map(district_map)
     # Filter numeric columns
     data = data.copy()
     num_col = ["total", "age_0", "age_1", "age_2", "age_3", "age_4", "age_5"]
@@ -130,8 +130,10 @@ def D100106_2(**kwargs):
     # geometry
     engine = create_engine(raw_data_db_uri)
     existing_data = _extract_db_info(VILLAGE_TABLE, engine)
-    gdata = data.merge(existing_data, left_on='village', right_on='vill_name', how='left')
-    gdata.drop(columns=['year', 'month', 'county_name', 'vill_name'], inplace=True)
+    gdata = data.merge(
+        existing_data, left_on="village", right_on="vill_name", how="left"
+    )
+    gdata.drop(columns=["year", "month", "county_name", "vill_name"], inplace=True)
     data = data.reset_index(drop=True)
     ready_data = gdata.copy()
 
@@ -152,6 +154,7 @@ def D100106_2(**kwargs):
     update_lasttime_in_data_to_dataset_info(
         engine, airflow_dag_id=dag_id, lasttime_in_data=lasttime_in_data
     )
+
 
 dag = CommonDag(proj_folder="proj_city_dashboard", dag_folder="D100106_2")
 dag.create_dag(etl_func=D100106_2)

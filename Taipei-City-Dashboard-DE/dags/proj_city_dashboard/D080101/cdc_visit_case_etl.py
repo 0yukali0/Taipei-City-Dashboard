@@ -88,7 +88,9 @@ def cdc_visit_case_etl(url, diease_name, **kwargs):
         agg_data[f"visit_p{i}sd"] = (mean + (i * std)).round()
     # add warning status
     agg_data["status"] = "green"
-    agg_data.loc[agg_data["patient_visit"] > agg_data["visit_p1sd"], "status"] = "yellow"
+    agg_data.loc[agg_data["patient_visit"] > agg_data["visit_p1sd"], "status"] = (
+        "yellow"
+    )
     agg_data.loc[agg_data["patient_visit"] > agg_data["visit_p2sd"], "status"] = "red"
     # select columns
     ready_data = agg_data[

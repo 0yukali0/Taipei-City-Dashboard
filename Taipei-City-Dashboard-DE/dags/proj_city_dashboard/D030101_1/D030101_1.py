@@ -32,6 +32,7 @@ def D030101_1(**kwargs):
     # 使用 json 模組讀取 GeoJSON，避免 fiona 版本問題
     import json
     from shapely.geometry import shape
+
     with open(local_file, encoding=ENCODING) as f:
         geojson_data = json.load(f)
     features = geojson_data.get("features", [])

@@ -44,6 +44,7 @@ def pavement_etl(file_name, web_url, page_id, rank_index, geometry_type, **kwarg
     # 使用 fiona 直接開啟以避免 fiona.path 問題
     import fiona
     from shapely.geometry import shape
+
     with fiona.open(local_file, encoding=encoding) as src:
         records = []
         geometries = []
@@ -53,16 +54,18 @@ def pavement_etl(file_name, web_url, page_id, rank_index, geometry_type, **kwarg
             records.append(props)
             geometries.append(shape(geom) if geom else None)
         raw_data = gpd.GeoDataFrame(records, geometry=geometries, crs=src.crs)
-    raw_data["data_time"] = get_data_taipei_file_last_modified_time(PAGE_ID, rank=rank_index)
+    raw_data["data_time"] = get_data_taipei_file_last_modified_time(
+        PAGE_ID, rank=rank_index
+    )
 
     # colname
     # Read
     data = raw_data.copy()
     # Drop columns
-    drop_col = ['id', '項次', '體積', '圖形']
+    drop_col = ["id", "項次", "體積", "圖形"]
     data.drop(columns=drop_col, inplace=True)
     # Rename
-    name_dict = {'名稱': 'name', '面積': 'area'}
+    name_dict = {"名稱": "name", "面積": "area"}
     data.rename(columns=name_dict, inplace=True)
     # Set crs
     data = data.set_crs(epsg=SET_CRS)
@@ -71,14 +74,14 @@ def pavement_etl(file_name, web_url, page_id, rank_index, geometry_type, **kwarg
         # Keep only Multipolygon
         data = data[data.geom_type == geometry_type]
         # Calculate area(acre)
-        data['area'] = (data['geometry'].area/10000).round(2)
+        data["area"] = (data["geometry"].area / 10000).round(2)
     elif geometry_type == "MultiLineString":
         # Keep only MultiLineString
         data = data[data.geom_type == geometry_type]
         # Buffer for mapbox view
-        data['geometry'] = data['geometry'].buffer(0.5)
+        data["geometry"] = data["geometry"].buffer(0.5)
         # Calculate area(acre)
-        data['area'] = (data['area'].astype(float)/10000).round(2)
+        data["area"] = (data["area"].astype(float) / 10000).round(2)
     # Transform crs
     data = data.to_crs(epsg=FROM_CRS)
     # Time

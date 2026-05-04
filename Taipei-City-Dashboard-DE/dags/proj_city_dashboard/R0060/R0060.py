@@ -66,7 +66,7 @@ def _R0060(**kwargs):
 
     # Extract
     raw_data = extarct_license_from_xml(filename, URL)
-    
+
     # 檢查是否有資料
     if raw_data.empty:
         print("!!!XML data is empty, skipping processing!!!")

@@ -15,6 +15,7 @@ def _D060201(**kwargs):
 
     def get_datataipei_file_rid(page_id):
         import re
+
         url = f"https://data.taipei/api/frontstage/tpeod/dataset.view?id={page_id}"
         res = requests.get(url)
         res.raise_for_status()
@@ -24,7 +25,7 @@ def _D060201(**kwargs):
         for data in data_list:
             # 從檔名中擷取年份資訊，例如 "臺北市政府消防局114年緊急救護服務統計月" -> "114"
             name = data["name"]
-            match = re.search(r'(\d+)年', name)
+            match = re.search(r"(\d+)年", name)
             if match:
                 year = match.group(1)  # 只取數字部分，如 "114"
             else:
@@ -70,12 +71,14 @@ def _D060201(**kwargs):
     for raw_data in raw_datas:
         data = raw_data.copy()
         year = data["year"].iloc[0] if "year" in data.columns else ""
-        
+
         # 新格式：從 "月" 欄位組合成 file_tag (如 "114年1月")
         if "月" in data.columns:
-            data["file_tag"] = data["月"].apply(lambda x: f"{year}年{int(x)}月" if pd.notna(x) else None)
+            data["file_tag"] = data["月"].apply(
+                lambda x: f"{year}年{int(x)}月" if pd.notna(x) else None
+            )
             data["town"] = None  # 新格式沒有區域別
-        
+
         # rename
         data = data.rename(
             columns={
@@ -127,9 +130,7 @@ def _D060201(**kwargs):
             load_behavior=load_behavior,
             default_table=default_table,
         )
-        update_lasttime_in_data_to_dataset_info(
-            engine, dag_id, data["data_time"].max()
-        )
+        update_lasttime_in_data_to_dataset_info(engine, dag_id, data["data_time"].max())
 
 
 dag = CommonDag(proj_folder="proj_city_dashboard", dag_folder="D060201")

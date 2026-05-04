@@ -24,25 +24,36 @@ import tempfile
 # Imports the Google Cloud client library
 from google.cloud import storage
 
+
 def custom_ignore_patterns(directory, files):
     """
     Custom ignore function to skip __init__.py in proj_city_dashboard directory
     """
     ignore = set()
-    if 'proj_city_dashboard' in directory:
-        if '__init__.py' in files:
-            ignore.add('__init__.py')
-    ignore.add('*_test.py')
+    if "proj_city_dashboard" in directory:
+        if "__init__.py" in files:
+            ignore.add("__init__.py")
+    ignore.add("*_test.py")
     return ignore
+
 
 def _create_dags_list(dags_directory: str) -> tuple[str, list[str]]:
     temp_dir = tempfile.mkdtemp()
 
     # Copy everything but the ignored files to a temp directory
-    copytree(dags_directory, f"{temp_dir}/", ignore=custom_ignore_patterns, dirs_exist_ok=True)
+    copytree(
+        dags_directory,
+        f"{temp_dir}/",
+        ignore=custom_ignore_patterns,
+        dirs_exist_ok=True,
+    )
 
     # Recursively find all Python and JSON files in the temp directory
-    dags = glob.glob(f"{temp_dir}/**/*.py", recursive=True) + glob.glob(f"{temp_dir}/**/*.json", recursive=True) + glob.glob(f"{temp_dir}/**/*.csv", recursive=True)
+    dags = (
+        glob.glob(f"{temp_dir}/**/*.py", recursive=True)
+        + glob.glob(f"{temp_dir}/**/*.json", recursive=True)
+        + glob.glob(f"{temp_dir}/**/*.csv", recursive=True)
+    )
     return (temp_dir, dags)
 
 

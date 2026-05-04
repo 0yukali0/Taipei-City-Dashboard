@@ -29,10 +29,10 @@ def _R0071_1(**kwargs):
 
     # Extract
     # taipei
-    raw_tpe_data = get_tdx_data(TPE_URL, output_format='dataframe')
+    raw_tpe_data = get_tdx_data(TPE_URL, output_format="dataframe")
     raw_tpe_data["county"] = "Taipei"
     # new taipei
-    raw_ntpe_data = get_tdx_data(NTPE_URL, output_format='dataframe')
+    raw_ntpe_data = get_tdx_data(NTPE_URL, output_format="dataframe")
     raw_ntpe_data["county"] = "New Taipei"
     # merge
     raw_data = pd.concat([raw_tpe_data, raw_ntpe_data])

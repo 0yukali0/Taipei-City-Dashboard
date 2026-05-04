@@ -31,7 +31,7 @@ def _R0036(**kwargs):
     if res.status_code != 200:
         raise ValueError(f"Request failed! status: {res.status_code}")
     res_json = res.json()
-    
+
     # Debug: Check the structure of the response
     print(f"Response type: {type(res_json)}")
     if isinstance(res_json, dict):
@@ -42,7 +42,7 @@ def _R0036(**kwargs):
             print(f"First item type: {type(res_json[0])}")
             if isinstance(res_json[0], dict):
                 print(f"First item keys: {list(res_json[0].keys())}")
-    
+
     # Handle different response structures
     if isinstance(res_json, list):
         raw_data = pd.DataFrame(res_json)
@@ -54,7 +54,7 @@ def _R0036(**kwargs):
     # Transform
     data = raw_data.copy()
     # rename
-    
+
     # "stn_id": "208",
     # "stn_name": "經貿",
     # "lon": 121.6209,
@@ -71,9 +71,9 @@ def _R0036(**kwargs):
         "stn_id": "station_no",
         "stn_name": "station_name",
         "obs_time": "recTime",
-        "max_allowable_water_level":"warning_level",
-        "pumb_status":"all_pumb_lights",
-        "lon":"lng"
+        "max_allowable_water_level": "warning_level",
+        "pumb_status": "all_pumb_lights",
+        "lon": "lng",
     }
     data = data.rename(columns=col_map)
     # time
@@ -88,8 +88,8 @@ def _R0036(**kwargs):
     )
     # pump location
     data["start_pumping_level"] = ""
-    data['river_basin'] = ""
-    
+    data["river_basin"] = ""
+
     # select columns
     ready_data = data[
         [

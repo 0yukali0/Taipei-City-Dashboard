@@ -33,8 +33,8 @@ def _D050401_1(**kwargs):
     # rename
     data.columns = data.columns.str.lower()
     data = data.rename(
-        columns={"class": "class", "geometry": "geometry", "data_time": "data_time"
-    })
+        columns={"class": "class", "geometry": "geometry", "data_time": "data_time"}
+    )
     # define column type
     data["class"] = data["class"].astype(str)
     data["class"] = data["class"].map({"1": "高", "2": "中", "3": "低"})

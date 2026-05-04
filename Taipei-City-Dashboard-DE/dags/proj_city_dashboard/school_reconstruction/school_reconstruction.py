@@ -25,36 +25,54 @@ def _school_reconstruction(**kwargs):
     history_table = dag_infos.get("ready_data_history_table")
     geometry_type = "Point"
     FROM_CRS = 4326
-    URL = 'https://data.taipei/api/frontstage/tpeod/dataset/resource.download?rid=b14137d5-fde6-4491-8817-2cf5f68ef0cf'
+    URL = "https://data.taipei/api/frontstage/tpeod/dataset/resource.download?rid=b14137d5-fde6-4491-8817-2cf5f68ef0cf"
     response = requests.get(URL, verify=False)
     # 讀取 CSV
     df = pd.read_csv(StringIO(response.text))
     # Transform
-    
-    data = df.rename(columns={
-        "序號": "id",
-        "學校": "school",
-        "計畫名稱": "project_name",
-        "行政區": "district",
-        "地址": "address",
-        "建築類別": "building_type",
-        "階段": "stage",
-        "地上樓層數": "above_ground_floors",
-        "地下樓層數": "underground_floors",
-        "工程基地緯度": "latitude",
-        "工程基地經度": "longitude"
-    })
+
+    data = df.rename(
+        columns={
+            "序號": "id",
+            "學校": "school",
+            "計畫名稱": "project_name",
+            "行政區": "district",
+            "地址": "address",
+            "建築類別": "building_type",
+            "階段": "stage",
+            "地上樓層數": "above_ground_floors",
+            "地下樓層數": "underground_floors",
+            "工程基地緯度": "latitude",
+            "工程基地經度": "longitude",
+        }
+    )
     data["data_time"] = get_tpe_now_time_str(is_with_tz=True)
-    
+
     # 清理經緯度資料，確保為數值型態
-    data["longitude"] = pd.to_numeric(data["longitude"], errors='coerce')
-    data["latitude"] = pd.to_numeric(data["latitude"], errors='coerce')
+    data["longitude"] = pd.to_numeric(data["longitude"], errors="coerce")
+    data["latitude"] = pd.to_numeric(data["latitude"], errors="coerce")
     # standardize geometry
     gdata = add_point_wkbgeometry_column_to_df(
         data, x=data["longitude"], y=data["latitude"], from_crs=FROM_CRS
     )
     # select column
-    ready_data = gdata[["data_time", "id", "school", "project_name", "district", "address", "building_type", "stage", "above_ground_floors", "underground_floors", "longitude", "latitude", "wkb_geometry"]]
+    ready_data = gdata[
+        [
+            "data_time",
+            "id",
+            "school",
+            "project_name",
+            "district",
+            "address",
+            "building_type",
+            "stage",
+            "above_ground_floors",
+            "underground_floors",
+            "longitude",
+            "latitude",
+            "wkb_geometry",
+        ]
+    ]
 
     # Load
     engine = create_engine(ready_data_db_uri)

@@ -46,7 +46,7 @@ def _D060102_1(**kwargs):
     )
     # define column type
     data["vil_code"] = data["vil_code"].astype(float).astype(int).astype(str)
-    
+
     # add column
     data["city"] = "台北市"
     # standardize time

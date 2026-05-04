@@ -28,7 +28,7 @@ def _R0051_3(**kwargs):
         raise ValueError("Invalid city {city}.")
 
     # Extract
-    raw_data = get_tdx_data(url, output_format='dataframe')
+    raw_data = get_tdx_data(url, output_format="dataframe")
 
     # Transform
     data = raw_data.copy()

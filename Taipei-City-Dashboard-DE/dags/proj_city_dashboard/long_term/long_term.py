@@ -15,6 +15,8 @@ from utils.transform_address import (
 )
 from utils.transform_geometry import add_point_wkbgeometry_column_to_df
 from utils.get_time import get_tpe_now_time_str
+
+
 def _transfer(**kwargs):
     # Config
     ready_data_db_uri = kwargs.get("ready_data_db_uri")
@@ -38,20 +40,22 @@ def _transfer(**kwargs):
     raw_data["data_time"] = get_tpe_now_time_str(is_with_tz=True)
 
     # Rename columns
-    raw_data = raw_data.rename(columns={
-        "_id": "place_id",
-        "屬性": "property",
-        "機構名稱": "place_name",
-        "區域別": "zone",
-        "地址": "address",
-        "電話": "tel",
-        "收容對象": "target_group",
-        "核定總床位數量": "bed_total",
-        "長照床位數量": "bed_longterm",
-        "養護床位數量": "bed_nursing",
-        "失智床位數量": "bed_dementia",
-        "安養床位數量": "bed_retirement"
-    })
+    raw_data = raw_data.rename(
+        columns={
+            "_id": "place_id",
+            "屬性": "property",
+            "機構名稱": "place_name",
+            "區域別": "zone",
+            "地址": "address",
+            "電話": "tel",
+            "收容對象": "target_group",
+            "核定總床位數量": "bed_total",
+            "長照床位數量": "bed_longterm",
+            "養護床位數量": "bed_nursing",
+            "失智床位數量": "bed_dementia",
+            "安養床位數量": "bed_retirement",
+        }
+    )
 
     # Add city field
     raw_data["city"] = raw_data["address"].str[:3]
@@ -67,15 +71,32 @@ def _transfer(**kwargs):
     raw_data["lat"] = lat
 
     # Geometry
-    gdf = add_point_wkbgeometry_column_to_df(raw_data, raw_data["lng"], raw_data["lat"], from_crs=4326)
+    gdf = add_point_wkbgeometry_column_to_df(
+        raw_data, raw_data["lng"], raw_data["lat"], from_crs=4326
+    )
 
     # Select columns
-    ready_data = gdf[[
-        "place_id", "property", "place_name", "zone", "address", "tel",
-        "target_group", "bed_total", "bed_longterm", "bed_nursing",
-        "bed_dementia", "bed_retirement", "city", "lng", "lat",
-        "wkb_geometry", "data_time"
-    ]]
+    ready_data = gdf[
+        [
+            "place_id",
+            "property",
+            "place_name",
+            "zone",
+            "address",
+            "tel",
+            "target_group",
+            "bed_total",
+            "bed_longterm",
+            "bed_nursing",
+            "bed_dementia",
+            "bed_retirement",
+            "city",
+            "lng",
+            "lat",
+            "wkb_geometry",
+            "data_time",
+        ]
+    ]
 
     # Load to PostgreSQL
     engine = create_engine(ready_data_db_uri)
@@ -85,19 +106,15 @@ def _transfer(**kwargs):
         load_behavior=load_behavior,
         default_table=default_table,
         history_table=history_table,
-        geometry_type="Point"
+        geometry_type="Point",
     )
 
     # Update metadata
     update_lasttime_in_data_to_dataset_info(
-        engine,
-        dag_id,
-        ready_data["data_time"].max()
+        engine, dag_id, ready_data["data_time"].max()
     )
 
+
 # Create DAG
-dag = CommonDag(
-    proj_folder="proj_city_dashboard",
-    dag_folder="long_term"
-)
+dag = CommonDag(proj_folder="proj_city_dashboard", dag_folder="long_term")
 dag.create_dag(etl_func=_transfer)
