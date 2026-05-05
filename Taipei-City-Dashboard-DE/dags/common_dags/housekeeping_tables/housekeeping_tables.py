@@ -25,7 +25,9 @@ def _transfer(**kwargs):
 
     ready_data_db_uri = kwargs.get("ready_data_db_uri")
     if not ready_data_db_uri:
-        raise ValueError("Missing ready_data_db_uri in kwargs (expected from CommonDag)")
+        raise ValueError(
+            "Missing ready_data_db_uri in kwargs (expected from CommonDag)"
+        )
 
     return housekeep_tables(
         table_names=table_names,

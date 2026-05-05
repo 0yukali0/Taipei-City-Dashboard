@@ -22,7 +22,7 @@ def _transfer(**kwargs):
     default_table = dag_infos.get("ready_data_default_table")
     history_table = dag_infos.get("ready_data_history_table")
     URL = "https://tsis.dbas.gov.taipei/statis/webMain.aspx?sys=220&ymf=8907&kind=21&type=0&funid=a04000401&cycle=1&outmode=12&compmode=0&outkind=3&deflst=2&nzo=1"
-    ENCODING = 'utf-8-sig'
+    ENCODING = "utf-8-sig"
     raw_data = pd.read_csv(URL, encoding=ENCODING)
 
     print(f"raw data =========== {raw_data.head()}")
@@ -53,19 +53,19 @@ def _transfer(**kwargs):
     data["data_time"] = get_tpe_now_time_str(is_with_tz=True)
 
     # Load
-    
+
     engine = create_engine(ready_data_db_uri)
     save_dataframe_to_postgresql(
         engine,
         data=data,
         load_behavior=load_behavior,
         default_table=default_table,
-        history_table=history_table
+        history_table=history_table,
     )
-    update_lasttime_in_data_to_dataset_info(
-            engine, dag_id, data["data_time"].max()
-        )
+    update_lasttime_in_data_to_dataset_info(engine, dag_id, data["data_time"].max())
 
 
-dag = CommonDag(proj_folder="proj_city_dashboard", dag_folder="population_age_distribution_monthly")
+dag = CommonDag(
+    proj_folder="proj_city_dashboard", dag_folder="population_age_distribution_monthly"
+)
 dag.create_dag(etl_func=_transfer)

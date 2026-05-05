@@ -119,12 +119,16 @@ def test_normalize_table_names():
 
 def test_cleanup_preserves_existing_indexes_and_vacuum():
     schema, table = "public", "t"
-    existing = [("idx_existing", f'CREATE INDEX "idx_existing" ON "{schema}"."{table}" ("x")')]
+    existing = [
+        ("idx_existing", f'CREATE INDEX "idx_existing" ON "{schema}"."{table}" ("x")')
+    ]
 
     statements: List[str] = []
     vacuum_statements: List[str] = []
 
-    conn = _StubConn(schema=schema, table=table, existing_indexes=existing, statements=statements)
+    conn = _StubConn(
+        schema=schema, table=table, existing_indexes=existing, statements=statements
+    )
     engine = _StubEngine(conn, vacuum_statements)
 
     cfg = HousekeepingConfig(
@@ -152,7 +156,9 @@ def test_cleanup_fallback_index_when_no_existing_indexes():
     statements: List[str] = []
     vacuum_statements: List[str] = []
 
-    conn = _StubConn(schema=schema, table=table, existing_indexes=[], statements=statements)
+    conn = _StubConn(
+        schema=schema, table=table, existing_indexes=[], statements=statements
+    )
     engine = _StubEngine(conn, vacuum_statements)
 
     cfg = HousekeepingConfig(

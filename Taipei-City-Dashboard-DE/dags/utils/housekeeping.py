@@ -23,7 +23,9 @@ def _validate_identifier(name: str, kind: str) -> None:
         )
 
 
-def _parse_table_name(table_name: str, default_schema: str = "public") -> Tuple[str, str]:
+def _parse_table_name(
+    table_name: str, default_schema: str = "public"
+) -> Tuple[str, str]:
     """Return (schema, table). Accepts 'table' or 'schema.table'."""
     if not isinstance(table_name, str) or not table_name:
         raise ValueError("table_name must be a non-empty string")
@@ -43,7 +45,9 @@ def _normalize_table_names(table_names: Union[str, Sequence[str]]) -> Sequence[s
         return [table_names]
     if isinstance(table_names, (list, tuple)):
         return [t for t in table_names if t]
-    raise ValueError("table_names must be a table name string or a list/tuple of table names")
+    raise ValueError(
+        "table_names must be a table name string or a list/tuple of table names"
+    )
 
 
 @dataclass(frozen=True)
@@ -66,7 +70,10 @@ class PostgresHousekeeper:
         _validate_identifier(self._config.time_column, "time_column")
         _validate_identifier(self._config.default_schema, "default_schema")
 
-        if not isinstance(self._config.retention_months, int) or self._config.retention_months <= 0:
+        if (
+            not isinstance(self._config.retention_months, int)
+            or self._config.retention_months <= 0
+        ):
             raise ValueError("retention_months must be a positive integer")
 
     def cleanup_table(self, engine, table_name: str) -> int:
@@ -83,7 +90,9 @@ class PostgresHousekeeper:
           - If you need to preserve schema details, consider switching to `CREATE TABLE ... (LIKE ... INCLUDING ALL)`.
         """
 
-        schema, table = _parse_table_name(table_name, default_schema=self._config.default_schema)
+        schema, table = _parse_table_name(
+            table_name, default_schema=self._config.default_schema
+        )
         tmp_suffix = self._config.tmp_suffix
         if not isinstance(tmp_suffix, str) or not tmp_suffix:
             raise ValueError("tmp_suffix must be a non-empty string")
@@ -152,7 +161,9 @@ class PostgresHousekeeper:
                 if self._config.create_index and self._config.preserve_existing_indexes:
                     existing_indexes = _fetch_existing_indexes(conn)
 
-                conn.execute(sa_text(f"LOCK TABLE {qualified_table} IN ACCESS EXCLUSIVE MODE"))
+                conn.execute(
+                    sa_text(f"LOCK TABLE {qualified_table} IN ACCESS EXCLUSIVE MODE")
+                )
 
                 conn.execute(sa_text(f"DROP TABLE IF EXISTS {qualified_new_table}"))
                 conn.execute(
@@ -167,7 +178,9 @@ class PostgresHousekeeper:
 
                 # Swap
                 conn.execute(sa_text(f"DROP TABLE {qualified_table}"))
-                conn.execute(sa_text(f"ALTER TABLE {qualified_new_table} RENAME TO \"{table}\""))
+                conn.execute(
+                    sa_text(f'ALTER TABLE {qualified_new_table} RENAME TO "{table}"')
+                )
 
                 # Rebuild indexes (after swap, so names can be stable)
                 created_indexes = 0
@@ -184,10 +197,10 @@ class PostgresHousekeeper:
                         for cols in index_columns:
                             idx_name = _index_name(cols)
                             _validate_identifier(idx_name, "index")
-                            cols_sql = ", ".join([f'\"{c}\"' for c in cols])
+                            cols_sql = ", ".join([f'"{c}"' for c in cols])
                             conn.execute(
                                 sa_text(
-                                    f"CREATE INDEX IF NOT EXISTS \"{idx_name}\" ON {qualified_table} ({cols_sql})"
+                                    f'CREATE INDEX IF NOT EXISTS "{idx_name}" ON {qualified_table} ({cols_sql})'
                                 )
                             )
                             created_indexes += 1
@@ -201,8 +214,14 @@ class PostgresHousekeeper:
                 processed = 1
             except ProgrammingError as e:
                 msg = str(e).lower()
-                if self._config.ignore_missing_table and ("does not exist" in msg or "undefined table" in msg):
-                    logger.warning("Housekeeping skipped missing table %s: %s", f"{schema}.{table}", e)
+                if self._config.ignore_missing_table and (
+                    "does not exist" in msg or "undefined table" in msg
+                ):
+                    logger.warning(
+                        "Housekeeping skipped missing table %s: %s",
+                        f"{schema}.{table}",
+                        e,
+                    )
                     return 0
                 raise
 
@@ -212,7 +231,9 @@ class PostgresHousekeeper:
             conn = engine.connect().execution_options(isolation_level="AUTOCOMMIT")
             try:
                 conn.execute(vacuum_sql)
-                logger.info("Housekeeping VACUUM (ANALYZE) done on %s", f"{schema}.{table}")
+                logger.info(
+                    "Housekeeping VACUUM (ANALYZE) done on %s", f"{schema}.{table}"
+                )
             finally:
                 conn.close()
 
@@ -232,7 +253,9 @@ def _config_from_dag_infos(dag_infos: Optional[dict]) -> HousekeepingConfig:
     index_columns = dag_infos.get("housekeeping_index_columns")
     if index_columns is not None:
         if not isinstance(index_columns, list):
-            raise ValueError("dag_infos['housekeeping_index_columns'] must be a list like [[col1], [col1, col2]]")
+            raise ValueError(
+                "dag_infos['housekeeping_index_columns'] must be a list like [[col1], [col1, col2]]"
+            )
         normalized_cols: List[List[str]] = []
         for item in index_columns:
             if isinstance(item, str):
@@ -240,7 +263,9 @@ def _config_from_dag_infos(dag_infos: Optional[dict]) -> HousekeepingConfig:
             elif isinstance(item, list) and all(isinstance(c, str) for c in item):
                 normalized_cols.append(item)
             else:
-                raise ValueError("Each housekeeping_index_columns item must be a string or list[str]")
+                raise ValueError(
+                    "Each housekeeping_index_columns item must be a string or list[str]"
+                )
         index_columns = normalized_cols
 
     return HousekeepingConfig(
@@ -248,11 +273,15 @@ def _config_from_dag_infos(dag_infos: Optional[dict]) -> HousekeepingConfig:
         time_column=str(dag_infos.get("housekeeping_time_column", "data_time")),
         time_cast=str(dag_infos.get("housekeeping_time_cast", "::timestamptz")),
         default_schema=str(dag_infos.get("housekeeping_default_schema", "public")),
-        ignore_missing_table=bool(dag_infos.get("housekeeping_ignore_missing_table", True)),
+        ignore_missing_table=bool(
+            dag_infos.get("housekeeping_ignore_missing_table", True)
+        ),
         tmp_suffix=str(dag_infos.get("housekeeping_tmp_suffix", "_new")),
         create_index=bool(dag_infos.get("housekeeping_create_index", True)),
         index_columns=index_columns,
-        preserve_existing_indexes=bool(dag_infos.get("housekeeping_preserve_existing_indexes", True)),
+        preserve_existing_indexes=bool(
+            dag_infos.get("housekeeping_preserve_existing_indexes", True)
+        ),
         vacuum_analyze=bool(dag_infos.get("housekeeping_vacuum_analyze", True)),
     )
 

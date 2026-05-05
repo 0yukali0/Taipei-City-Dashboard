@@ -13,7 +13,9 @@ def _safe_under(base: Path, target: Path) -> bool:
     try:
         base_resolved = base.resolve()
         target_resolved = target.resolve()
-        return base_resolved == target_resolved or base_resolved in target_resolved.parents
+        return (
+            base_resolved == target_resolved or base_resolved in target_resolved.parents
+        )
     except Exception:
         return False
 
@@ -53,7 +55,11 @@ def _delete_old_logs(root: Path, cutoff: datetime) -> dict:
         for dirname in dirnames:
             dir_path = current_path / dirname
             try:
-                if dir_path.exists() and dir_path.is_dir() and not any(dir_path.iterdir()):
+                if (
+                    dir_path.exists()
+                    and dir_path.is_dir()
+                    and not any(dir_path.iterdir())
+                ):
                     dir_path.rmdir()
                     deleted_dirs += 1
             except Exception:
@@ -116,7 +122,9 @@ def _detect_db_clean_subcommand() -> str:
     if cleanup_help and "invalid choice" not in cleanup_help.lower():
         return "cleanup"
 
-    raise RuntimeError("Could not detect Airflow DB cleanup subcommand (expected `clean` or `cleanup`).")
+    raise RuntimeError(
+        "Could not detect Airflow DB cleanup subcommand (expected `clean` or `cleanup`)."
+    )
 
 
 def _get_airflow_db_clean_help_text(subcommand: str) -> str:
@@ -204,9 +212,15 @@ def _run_airflow_db_cleanup(cutoff_timestamp: str) -> dict:
 
     timestamp_flags = _pick_timestamp_flag_candidates(help_text)
     if help_text and f"db {subcommand}" not in help_text.lower():
-        logging.info("`airflow db %s --help` output captured (may be truncated).", subcommand)
+        logging.info(
+            "`airflow db %s --help` output captured (may be truncated).", subcommand
+        )
 
-    if help_text and "--clean-before-timestamp" not in help_text and "--before" not in help_text:
+    if (
+        help_text
+        and "--clean-before-timestamp" not in help_text
+        and "--before" not in help_text
+    ):
         logging.warning(
             "`airflow db %s --help` did not list known timestamp flags; will try common variants.",
             subcommand,
@@ -257,11 +271,15 @@ def _run_airflow_db_cleanup(cutoff_timestamp: str) -> dict:
 
                 # If it looks like a CLI parse error, try next variant.
                 if res.returncode == 2 or _looks_like_cli_parse_error(last_stderr):
-                    logging.warning("DB cleanup command variant not accepted; trying next variant.")
+                    logging.warning(
+                        "DB cleanup command variant not accepted; trying next variant."
+                    )
                     continue
 
                 # Non-CLI failure (DB locked, permission, etc.) -> fail fast.
-                raise RuntimeError(f"airflow db cleanup failed with exit code {res.returncode}")
+                raise RuntimeError(
+                    f"airflow db cleanup failed with exit code {res.returncode}"
+                )
 
     raise RuntimeError(
         f"All airflow db cleanup command variants failed (last exit={last_returncode})."
@@ -273,10 +291,16 @@ def _transfer(**kwargs):
     retention_days = int(dag_infos.get("retention_days", 7))
     now_utc = datetime.now(timezone.utc)
     cutoff = now_utc - timedelta(days=retention_days)
-    cutoff_timestamp = cutoff.replace(hour=0, minute=0, second=0, microsecond=0).isoformat()
+    cutoff_timestamp = cutoff.replace(
+        hour=0, minute=0, second=0, microsecond=0
+    ).isoformat()
 
     base_log_folder = Path(
-        conf.get("logging", "base_log_folder", fallback=os.path.join(os.getenv("AIRFLOW_HOME", "/opt/airflow"), "logs"))
+        conf.get(
+            "logging",
+            "base_log_folder",
+            fallback=os.path.join(os.getenv("AIRFLOW_HOME", "/opt/airflow"), "logs"),
+        )
     )
     base_log_folder = base_log_folder.expanduser()
 
@@ -307,7 +331,11 @@ def _transfer(**kwargs):
 
     total_deleted_files = sum(r.get("deleted_files", 0) for r in results)
     total_deleted_dirs = sum(r.get("deleted_dirs", 0) for r in results)
-    logging.info("Log cleanup summary: deleted_files=%d, deleted_dirs=%d", total_deleted_files, total_deleted_dirs)
+    logging.info(
+        "Log cleanup summary: deleted_files=%d, deleted_dirs=%d",
+        total_deleted_files,
+        total_deleted_dirs,
+    )
 
 
 dag = CommonDag(proj_folder="common_dags", dag_folder="clean_log_and_metadata")

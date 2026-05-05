@@ -35,39 +35,41 @@ def _D020401(**kwargs):
     # rename
     data = data.rename(
         columns={
-            '專案名稱': "project_name",
-            '災情發生時間': "occurred_time",
-            '主災情類型名稱': "main_type",
-            '災情細項': "sub_type",
-            '災情行政區': "dist",
-            '災情通報單位': "report_unit",
-            '經度': "lng",
-            '緯度': "lat",
+            "專案名稱": "project_name",
+            "災情發生時間": "occurred_time",
+            "主災情類型名稱": "main_type",
+            "災情細項": "sub_type",
+            "災情行政區": "dist",
+            "災情通報單位": "report_unit",
+            "經度": "lng",
+            "緯度": "lat",
             "data_time": "data_time",
         }
     )
     # define columns type
-    float_cols = ['lng', 'lat']
+    float_cols = ["lng", "lat"]
     for col in float_cols:
         data[col] = data[col].astype(float)
     # standardize time
     data["data_time"] = convert_str_to_time_format(data["data_time"])
     data["occurred_time"] = convert_str_to_time_format(data["occurred_time"])
     # standardize geometry
-    gdata = add_point_wkbgeometry_column_to_df(data, data["lng"], data["lat"], from_crs=FROM_CRS)
-        # select columns
+    gdata = add_point_wkbgeometry_column_to_df(
+        data, data["lng"], data["lat"], from_crs=FROM_CRS
+    )
+    # select columns
     ready_data = gdata[
         [
-            'data_time',
-            'occurred_time',
-            'project_name',
-            'main_type',
-            'sub_type',
-            'report_unit',
-            'dist',
-            'lng',
-            'lat', 
-            'wkb_geometry'
+            "data_time",
+            "occurred_time",
+            "project_name",
+            "main_type",
+            "sub_type",
+            "report_unit",
+            "dist",
+            "lng",
+            "lat",
+            "wkb_geometry",
         ]
     ]
 

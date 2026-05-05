@@ -1,6 +1,7 @@
 from airflow import DAG
 from operators.common_pipeline import CommonDag
 
+
 def _R0068(**kwargs):
     import pandas as pd
     from sqlalchemy import create_engine

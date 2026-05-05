@@ -51,7 +51,7 @@ def etl_function(**kwargs):
     # Extract
     res = get_data_taipei_api(RID)
     raw_data = pd.DataFrame(res)
-    # Highly recommend to add `data_time` column to the dataframe for future long term data 
+    # Highly recommend to add `data_time` column to the dataframe for future long term data
     # tracking and identifying the time of the data content.
     # If there is no time information in the raw data, you can use the last modified time of the data source.
     raw_data["data_time"] = get_data_taipei_file_last_modified_time(PAGE_ID)

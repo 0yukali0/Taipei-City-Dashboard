@@ -66,9 +66,7 @@ def test_create_dags_list_invalid_directory() -> None:
 
 
 def test_create_dags_list_empty_directory(empty_directory: str) -> None:
-    (temp_dir, dags) = add_dags_to_composer._create_dags_list(
-        empty_directory
-    )  # noqa: E117
+    (temp_dir, dags) = add_dags_to_composer._create_dags_list(empty_directory)  # noqa: E117
     assert len(dags) == 0
     assert len(os.listdir(temp_dir)) == 0
 

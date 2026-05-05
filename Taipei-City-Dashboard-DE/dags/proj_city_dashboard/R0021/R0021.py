@@ -41,7 +41,6 @@ def _R0021(**kwargs):
     # secelt columns
     ready_data = gdata.drop(columns=["geometry", "data_time"])
 
-
     # Load
     engine = create_engine(ready_data_db_uri)
     save_geodataframe_to_postgresql(

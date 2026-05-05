@@ -21,7 +21,7 @@ def _D020201(**kwargs):
     from utils.transform_time import convert_str_to_time_format
 
     def _show_wired_addr(street_data):
-        addr_level = ['弄', '巷', '街', '段', '橋', '路']
+        addr_level = ["弄", "巷", "街", "段", "橋", "路"]
         for addr in street_data:
             if addr[-1] in addr_level:
                 pass
@@ -33,7 +33,7 @@ def _D020201(**kwargs):
 
     def _show_unmatched_street(geo_data_frame):
         is_unmatched = geo_data_frame["town"].isna()
-        print(geo_data_frame.loc[is_unmatched, 'street'])
+        print(geo_data_frame.loc[is_unmatched, "street"])
 
     # Config
     ready_data_db_uri = kwargs.get("ready_data_db_uri")
@@ -54,7 +54,7 @@ def _D020201(**kwargs):
 
     # Transform
     data = raw_data.copy()
-    
+
     # rename
     data = data.rename(
         columns={
@@ -68,7 +68,7 @@ def _D020201(**kwargs):
         }
     )
     # define columns type
-    if 'width_meter' in data.columns:
+    if "width_meter" in data.columns:
         data["width_meter"] = data["width_meter"].astype(float)
     else:
         print("欄位 'width_meter' 不存在")

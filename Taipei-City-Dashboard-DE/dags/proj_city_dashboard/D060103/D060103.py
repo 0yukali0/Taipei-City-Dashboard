@@ -135,9 +135,7 @@ def _D060103(**kwargs):
             history_table=history_table,
             geometry_type=GEOMETRY_TYPE,
         )
-        update_lasttime_in_data_to_dataset_info(
-            engine, dag_id, data["data_time"].max()
-        )
+        update_lasttime_in_data_to_dataset_info(engine, dag_id, data["data_time"].max())
 
 
 dag = CommonDag(proj_folder="proj_city_dashboard", dag_folder="D060103")

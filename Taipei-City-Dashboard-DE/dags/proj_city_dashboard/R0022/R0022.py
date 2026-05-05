@@ -3,9 +3,11 @@ from operators.common_pipeline import CommonDag
 from io import StringIO
 import requests
 
+
 def _R0022(**kwargs):
     import pandas as pd
     from sqlalchemy import create_engine
+
     # from utils.extract_stage import get_data_taipei_api
     from utils.load_stage import (
         save_dataframe_to_postgresql,
@@ -25,23 +27,24 @@ def _R0022(**kwargs):
     # # Extract
     # res = get_data_taipei_api(RID)
     # raw_data = pd.DataFrame(res)
-    
-    # 20250315 發現來源api 改為csv檔案
-    url = 'https://tsis.dbas.gov.taipei/statis/webMain.aspx?sys=220&ymf=8701&kind=21&type=0&funid=a04003101&cycle=1&outmode=12&compmode=0&outkind=3&deflst=2&nzo=1'
 
-    ENCODING = 'utf-8-sig'
+    # 20250315 發現來源api 改為csv檔案
+    url = "https://tsis.dbas.gov.taipei/statis/webMain.aspx?sys=220&ymf=8701&kind=21&type=0&funid=a04003101&cycle=1&outmode=12&compmode=0&outkind=3&deflst=2&nzo=1"
+
+    ENCODING = "utf-8-sig"
     raw_data = pd.read_csv(url, encoding=ENCODING)
 
-
-        # Transform
+    # Transform
     data = raw_data.copy()
-    data = data.rename(columns={"破獲率[％]": "破獲率[%]","統計期": "年月別"})
+    data = data.rename(columns={"破獲率[％]": "破獲率[%]", "統計期": "年月別"})
     year = data["年月別"].str.split("年").str[0]
     month = data["年月別"].str.split("年").str[1]
     year = year.str.zfill(3)
     month = month.str.replace("月", "").str.strip().str.zfill(2)
     data["年月別"] = year + month + "01"
-    data["年月別"] = convert_str_to_time_format(time_column=data["年月別"], from_format="%TY%m%d")
+    data["年月別"] = convert_str_to_time_format(
+        time_column=data["年月別"], from_format="%TY%m%d"
+    )
     ready_data = data[
         [
             "破獲件數/總計[件]",

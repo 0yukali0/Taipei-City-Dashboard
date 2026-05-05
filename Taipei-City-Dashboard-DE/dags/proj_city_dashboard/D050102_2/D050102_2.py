@@ -38,7 +38,9 @@ def _D050102_2(**kwargs):
     CITY = "臺北市"
 
     # Extract
-    res_json: Any | DataFrame | Literal[False] = get_json_file(url, dag_id, is_proxy=False)
+    res_json: Any | DataFrame | Literal[False] = get_json_file(
+        url, dag_id, is_proxy=False
+    )
     res_json = keys_to_lower(res_json)
     # parse json
     issueTime = res_json["cwaopendata"]["dataset"]["datasetinfo"]["issuetime"]
@@ -92,7 +94,11 @@ def _D050102_2(**kwargs):
                         temp["item"] = (
                             we["elementname"].lower() + "_" + str(a)
                         )  # 多個value要改名稱
-                        temp["value"] = list(ele_value.values())[0] if isinstance(ele_value, dict) else ele_value
+                        temp["value"] = (
+                            list(ele_value.values())[0]
+                            if isinstance(ele_value, dict)
+                            else ele_value
+                        )
                         if ele.get("datatime"):
                             temp["start_time"] = ele["datatime"]
                             temp["end_time"] = ""
@@ -137,7 +143,7 @@ def _D050102_2(**kwargs):
     data["end_time"] = convert_str_to_time_format(data["end_time"])
     data["data_time"] = updateTime
     data["data_time"] = convert_str_to_time_format(data["data_time"])
-    
+
     # restructure data by time
     # 新 API 結構：以天氣現象的時間點為基準（32個時間點，每3小時）
     # 溫度等有更多時間點，需要對應匹配
@@ -146,26 +152,26 @@ def _D050102_2(**kwargs):
         data_time = _g[0]
         city = _g[1]
         dist = _g[2]
-        
+
         # 以天氣現象的時間點為基準
         weather_data = gdata[gdata["item"] == "weather"].sort_values("start_time")
         max_seq = len(weather_data)
-        
+
         for seq in range(max_seq):
             is_seq = gdata["seq"] == seq
-            
+
             # 取得該 seq 的時間範圍
             weather_row = gdata.loc[is_seq & (gdata["item"] == "weather")]
             if weather_row.empty:
                 continue
             start_time = weather_row["start_time"].iloc[0]
             end_time = weather_row["end_time"].iloc[0]
-            
+
             # 取得各項天氣資訊（使用相同 seq）
             def get_value(item_name, default=None):
                 matched = gdata.loc[is_seq & (gdata["item"] == item_name), "value"]
                 return matched.iloc[0] if not matched.empty else default
-            
+
             weather = get_value("weather")
             weather_code = get_value("weather_code")
             weather_summary = get_value("weather_summary")
@@ -179,7 +185,7 @@ def _D050102_2(**kwargs):
             wind_speed = get_value("wind_speed")
             wind_speed_level = get_value("wind_speed_level")
             rainfall_probability = get_value("rainfall_probability_6hour")
-            
+
             # reshape - 保留原有欄位結構，rainfall_probability_12hour 設為與 6hour 相同
             temp_res = [
                 data_time,

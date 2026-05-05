@@ -27,7 +27,7 @@ def renew_etl(url, from_crs, geometry_type, **kwargs):
     # 使用 json 模組讀取 GeoJSON，避免 fiona 版本問題
     with open(local_file, encoding="utf-8") as f:
         geojson_data = json.load(f)
-    
+
     # 將 GeoJSON 轉換為 GeoDataFrame
     features = geojson_data.get("features", [])
     if features:
@@ -41,11 +41,11 @@ def renew_etl(url, from_crs, geometry_type, **kwargs):
         raw_data = gpd.GeoDataFrame(rows, geometry=geometries, crs=f"EPSG:{from_crs}")
     else:
         raw_data = gpd.GeoDataFrame()
-    
+
     if raw_data.empty:
         print("!!!GeoJSON data is empty!!!")
         return
-        
+
     raw_data["data_time"] = get_tpe_now_time_str()
 
     # Transform

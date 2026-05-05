@@ -22,10 +22,14 @@ def _transfer(**kwargs):
     # Load
     GEOMETRY_TYPE = "Point"
     TPE_URL = "https://tdx.transportdata.tw/api/basic/v2/Tourism/ScenicSpot/Taipei?%24format=JSON"
-    res = get_tdx_data(TPE_URL, output_format='dataframe')
+    res = get_tdx_data(TPE_URL, output_format="dataframe")
     df = res.copy()
-    df["longitude"] = df["Position"].apply(lambda pos: pos.get("PositionLon") if isinstance(pos, dict) else None)
-    df["latitude"] = df["Position"].apply(lambda pos: pos.get("PositionLat") if isinstance(pos, dict) else None)
+    df["longitude"] = df["Position"].apply(
+        lambda pos: pos.get("PositionLon") if isinstance(pos, dict) else None
+    )
+    df["latitude"] = df["Position"].apply(
+        lambda pos: pos.get("PositionLat") if isinstance(pos, dict) else None
+    )
     zipcode_to_area = {
         "100": "中正區",
         "103": "大同區",
@@ -38,24 +42,37 @@ def _transfer(**kwargs):
         "112": "北投區",
         "114": "內湖區",
         "115": "南港區",
-        "116": "文山區"
+        "116": "文山區",
     }
-    df['distric'] = df['ZipCode'].astype(str).map(zipcode_to_area)
+    df["distric"] = df["ZipCode"].astype(str).map(zipcode_to_area)
 
-
-    df = df.rename(columns={
-        "ScenicSpotName": "name",
-        "DescriptionDetail": "introduction",
-        "Phone": "tel",
-        "Class1": "type",
-        "City": "city"
-    })
+    df = df.rename(
+        columns={
+            "ScenicSpotName": "name",
+            "DescriptionDetail": "introduction",
+            "Phone": "tel",
+            "Class1": "type",
+            "City": "city",
+        }
+    )
 
     gdata = add_point_wkbgeometry_column_to_df(
-            df, x=df["longitude"], y=df["latitude"], from_crs=4326
-        )
+        df, x=df["longitude"], y=df["latitude"], from_crs=4326
+    )
 
-    df = gdata[["name", "type", "introduction", "city", "distric", "tel", "longitude", "latitude", "wkb_geometry"]]
+    df = gdata[
+        [
+            "name",
+            "type",
+            "introduction",
+            "city",
+            "distric",
+            "tel",
+            "longitude",
+            "latitude",
+            "wkb_geometry",
+        ]
+    ]
     df["data_time"] = pd.to_datetime("now").strftime("%Y-%m-%d %H:%M:%S")
 
     engine = create_engine(ready_data_db_uri)
@@ -67,9 +84,8 @@ def _transfer(**kwargs):
         history_table=history_table,
         geometry_type=GEOMETRY_TYPE,
     )
-    update_lasttime_in_data_to_dataset_info(
-            engine, dag_id, df["data_time"].max()
-        )
+    update_lasttime_in_data_to_dataset_info(engine, dag_id, df["data_time"].max())
+
 
 dag = CommonDag(proj_folder="proj_city_dashboard", dag_folder="tourist_attractions")
 dag.create_dag(etl_func=_transfer)

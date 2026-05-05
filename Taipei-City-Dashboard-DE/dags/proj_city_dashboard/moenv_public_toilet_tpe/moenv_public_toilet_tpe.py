@@ -41,7 +41,27 @@ def _transfer(**kwargs):
     gdata = add_point_wkbgeometry_column_to_df(
         data, data["longitude"], data["latitude"], from_crs=FROM_CRS
     )
-    data = gdata[["country", "city", "village", "number", "name", "address", "administration", "latitude", "longitude", "grade", "type2", "type", "exec", "diaper", "area", "data_time", "wkb_geometry"]]
+    data = gdata[
+        [
+            "country",
+            "city",
+            "village",
+            "number",
+            "name",
+            "address",
+            "administration",
+            "latitude",
+            "longitude",
+            "grade",
+            "type2",
+            "type",
+            "exec",
+            "diaper",
+            "area",
+            "data_time",
+            "wkb_geometry",
+        ]
+    ]
 
     # Load
     # Load data to DB
@@ -58,7 +78,6 @@ def _transfer(**kwargs):
     lasttime_in_data = gdata["data_time"].max()
     engine = create_engine(ready_data_db_uri)
     update_lasttime_in_data_to_dataset_info(engine, dag_id, lasttime_in_data)
-
 
 
 dag = CommonDag(proj_folder="proj_city_dashboard", dag_folder="moenv_public_toilet_tpe")

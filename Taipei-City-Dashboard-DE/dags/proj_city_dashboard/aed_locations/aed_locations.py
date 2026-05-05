@@ -2,7 +2,10 @@ from shapely.geometry import Point
 from airflow import DAG
 from operators.common_pipeline import CommonDag
 from utils.extract_stage import get_current_rid_from_page_id, get_data_taipei_api
-from utils.load_stage import save_geodataframe_to_postgresql, update_lasttime_in_data_to_dataset_info
+from utils.load_stage import (
+    save_geodataframe_to_postgresql,
+    update_lasttime_in_data_to_dataset_info,
+)
 from utils.get_time import get_tpe_now_time_str
 from utils.transform_geometry import add_point_wkbgeometry_column_to_df
 from sqlalchemy import create_engine
@@ -11,13 +14,13 @@ import pandas as pd
 
 def _transfer(**kwargs):
     # Config
-    ready_data_db_uri = kwargs.get('ready_data_db_uri')
-    proxies = kwargs.get('proxies')  # 若有用 proxy 可啟用
-    dag_infos = kwargs.get('dag_infos')
-    dag_id = dag_infos.get('dag_id')
-    load_behavior = dag_infos.get('load_behavior')
-    default_table = dag_infos.get('ready_data_default_table')
-    history_table = dag_infos.get('ready_data_history_table')
+    ready_data_db_uri = kwargs.get("ready_data_db_uri")
+    proxies = kwargs.get("proxies")  # 若有用 proxy 可啟用
+    dag_infos = kwargs.get("dag_infos")
+    dag_id = dag_infos.get("dag_id")
+    load_behavior = dag_infos.get("load_behavior")
+    default_table = dag_infos.get("ready_data_default_table")
+    history_table = dag_infos.get("ready_data_history_table")
     GEOMETRY_TYPE = "Point"
     FROM_CRS = 4326
 
@@ -31,23 +34,35 @@ def _transfer(**kwargs):
 
     # Rename columns to match provided structure
     # 注意:資料集目前無「縣市別代碼」欄位,city_code 從「行政區域代碼」衍生
-    raw_data = raw_data.rename(columns={
-        "_id": "place_id",
-        "場所名稱": "place_name",
-        "場所地址": "address",
-        "行政區域代碼": "district_code",
-        "緯度": "lat",
-        "經度": "lng",
-        "場所分類": "category",
-        "場所類型": "type",
-        "aed放置地點": "aed_location"
-    })
+    raw_data = raw_data.rename(
+        columns={
+            "_id": "place_id",
+            "場所名稱": "place_name",
+            "場所地址": "address",
+            "行政區域代碼": "district_code",
+            "緯度": "lat",
+            "經度": "lng",
+            "場所分類": "category",
+            "場所類型": "type",
+            "aed放置地點": "aed_location",
+        }
+    )
 
     # Clean and select
-    df = raw_data[[
-        "place_id", "place_name", "address", "district_code",
-        "lat", "lng", "category", "type", "aed_location", "data_time"
-    ]].copy()
+    df = raw_data[
+        [
+            "place_id",
+            "place_name",
+            "address",
+            "district_code",
+            "lat",
+            "lng",
+            "category",
+            "type",
+            "aed_location",
+            "data_time",
+        ]
+    ].copy()
 
     # 從 district_code (8 碼,例如 63000030) 衍生 city (5 碼,63000) 與 district (8 碼)
     df["district"] = df["district_code"].astype(str)
@@ -56,14 +71,27 @@ def _transfer(**kwargs):
     # 經緯度轉為 WKB 幾何
     df["lat"] = pd.to_numeric(df["lat"], errors="coerce")
     df["lng"] = pd.to_numeric(df["lng"], errors="coerce")
-    gdf = add_point_wkbgeometry_column_to_df(df, df["lng"], df["lat"], from_crs=FROM_CRS)
+    gdf = add_point_wkbgeometry_column_to_df(
+        df, df["lng"], df["lat"], from_crs=FROM_CRS
+    )
 
     # 最終欄位
-    final_df = gdf[[
-        "place_id", "place_name", "address", "city", "district",
-        "category", "type", "aed_location",
-        "lat", "lng", "wkb_geometry", "data_time"
-    ]]
+    final_df = gdf[
+        [
+            "place_id",
+            "place_name",
+            "address",
+            "city",
+            "district",
+            "category",
+            "type",
+            "aed_location",
+            "lat",
+            "lng",
+            "wkb_geometry",
+            "data_time",
+        ]
+    ]
 
     # Load to PostgreSQL
     engine = create_engine(ready_data_db_uri)
@@ -78,9 +106,11 @@ def _transfer(**kwargs):
 
     # Update dataset info
     lasttime_in_data = final_df["data_time"].max()
-    update_lasttime_in_data_to_dataset_info(engine, airflow_dag_id=dag_id, lasttime_in_data=lasttime_in_data)
+    update_lasttime_in_data_to_dataset_info(
+        engine, airflow_dag_id=dag_id, lasttime_in_data=lasttime_in_data
+    )
 
 
 # Create DAG
-dag = CommonDag(proj_folder='proj_city_dashboard', dag_folder='aed_locations')
+dag = CommonDag(proj_folder="proj_city_dashboard", dag_folder="aed_locations")
 dag.create_dag(etl_func=_transfer)

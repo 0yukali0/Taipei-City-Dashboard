@@ -724,7 +724,7 @@ def main_process(addr_cleaned):
         # seg lane
         # 特別的中文巷名
         new_addr, seg_str, other_str = seg_only_by_regexp(
-            adc, "lane", f'{"|".join(cn_lane)}'
+            adc, "lane", f"{'|'.join(cn_lane)}"
         )
         if seg_str == "":
             pattern = "[0-9一二三四五六七八九十]+巷"
@@ -874,7 +874,7 @@ def main_process(addr_cleaned):
 def save_data(addr, addr_cleaned, standard_addr_list):
     """
     與main_process配套使用，將結果轉換為df，方便使用。
-    
+
     Example:
         ``` python
         import pandas as pd

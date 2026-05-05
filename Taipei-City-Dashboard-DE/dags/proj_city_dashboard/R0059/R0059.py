@@ -23,7 +23,7 @@ def extarct_license_from_xml(filename, url):
     except ET.ParseError as e:
         print(f"!!!XML parse error: {e}!!!")
         return pd.DataFrame()
-    
+
     root = tree.getroot()
     df_list = []
     for _license in root:
@@ -132,7 +132,7 @@ def _R0059(**kwargs):
 
     # Extract
     raw_data = extarct_license_from_xml(filename, URL)
-    
+
     # 檢查是否有資料
     if raw_data.empty:
         print("!!!XML data is empty, skipping processing!!!")

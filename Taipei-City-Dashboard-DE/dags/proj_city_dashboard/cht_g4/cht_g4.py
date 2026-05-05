@@ -1,6 +1,6 @@
 from airflow import DAG
 from operators.common_pipeline import CommonDag
-from datetime import datetime,timedelta,timezone
+from datetime import datetime, timedelta, timezone
 import pandas as pd
 import requests
 from settings.global_config import PROXIES
@@ -26,32 +26,27 @@ def _cht_g4(**kwargs):
     cht = CHTAuth()
     access_token = cht.get_token(now_time)
     url = Variable.get("G2_G4_API_URL")
-    headers = {
-        'Content-Type': 'application/json',
-        'User-Agent': 'curl/7.68.0'
-        }   
+    headers = {"Content-Type": "application/json", "User-Agent": "curl/7.68.0"}
 
-    playload = json.dumps({
-        "token": access_token,
-        "split": "1",
-        "api_id": "33"
-    })
+    playload = json.dumps({"token": access_token, "split": "1", "api_id": "33"})
     resp = requests.post(url, headers=headers, data=playload, verify=False)
     if resp.status_code != 200:
         raise ValueError(f"Request failed! status: {resp.status_code}")
 
     res = resp.json()
-    if res['status'] == 1:
+    if res["status"] == 1:
         raw_data = []
         for entry in res["data"]:
             ev_name = entry["name"]
             grids = entry["grids"]
             for grid in grids:
-                raw_data.append({
-                    "ev_name": ev_name,
-                    "gid": grid["gid"],
-                    "population": grid["population"]
-                })
+                raw_data.append(
+                    {
+                        "ev_name": ev_name,
+                        "gid": grid["gid"],
+                        "population": grid["population"],
+                    }
+                )
         # Convert the structured data to a DataFrame
         raw_data_df = pd.DataFrame(raw_data)
         # sql = """select ev_name, gid from public.nye_grid"""
@@ -64,11 +59,11 @@ def _cht_g4(**kwargs):
         # merged_df = merged_df.drop(columns=['ev_name_b','ev_name_a'])
         # merged_df['gid'] = merged_df['gid'].astype(int)
         # Add additional columns
-        raw_data_df['time'] = res['time']
-        raw_data_df['data_time'] = get_tpe_now_time_str()
-        raw_data_df['status'] = res['status']
-        raw_data_df['api_id'] = res['api_id']
-        raw_data_df['msg'] = res['msg']
+        raw_data_df["time"] = res["time"]
+        raw_data_df["data_time"] = get_tpe_now_time_str()
+        raw_data_df["status"] = res["status"]
+        raw_data_df["api_id"] = res["api_id"]
+        raw_data_df["msg"] = res["msg"]
         logging.info(raw_data_df.columns)
     else:
         return res
@@ -80,8 +75,9 @@ def _cht_g4(**kwargs):
         default_table=default_table,
     )
     update_lasttime_in_data_to_dataset_info(
-            engine, dag_id, raw_data_df["data_time"].max()
-        )
+        engine, dag_id, raw_data_df["data_time"].max()
+    )
+
 
 dag = CommonDag(proj_folder="proj_city_dashboard", dag_folder="cht_g4")
 dag.create_dag(etl_func=_cht_g4)

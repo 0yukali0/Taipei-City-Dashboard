@@ -45,6 +45,7 @@ def _R0019(**kwargs):
     # 使用 fiona 直接開啟以避免 fiona.path 問題
     import fiona
     from shapely.geometry import shape
+
     shp_path = f"{unzip_path}/{target_shp_file}"
     with fiona.open(shp_path, encoding=ENCODING) as src:
         records = []
@@ -54,7 +55,9 @@ def _R0019(**kwargs):
             geom = feature.get("geometry")
             records.append(props)
             geometries.append(shape(geom) if geom else None)
-        raw_data = gpd.GeoDataFrame(records, geometry=geometries, crs=f"EPSG:{FROM_CRS}")
+        raw_data = gpd.GeoDataFrame(
+            records, geometry=geometries, crs=f"EPSG:{FROM_CRS}"
+        )
 
     # Transform
     gdata = raw_data.copy()

@@ -1,26 +1,31 @@
 # ====== Model Exporter ======
-FROM python:3.12-slim AS model_export
+FROM python:3.12-slim   AS model_export
 ARG HF_TOKEN   # 若你有 Hugging Face 私有模型或想提高速率，可傳 token（可留空）
 ENV HF_HOME=/root/.cache/huggingface
-WORKDIR /w
 
-# 安裝匯出所需套件
-RUN pip install --no-cache-dir \
-      "transformers>=4.44" \
-      "optimum[onnxruntime]>=1.20.0" \
-      onnxruntime
+WORKDIR /root
+RUN --mount=type=cache,sharing=locked,mode=0777,target=/root/.cache/uv,id=uv \ 
+	--mount=from=ghcr.io/astral-sh/uv:0.11.7,source=/uv,target=/usr/bin/uv \
+	--mount=type=bind,target=requirements.txt,src=requirements.txt \
+	uv venv -p 3.12 && \
+	uv pip install -r requirements.txt
+ENV PATH="/root/.venv/bin:$PATH" \
+    UV_PYTHON=/root/.venv/bin/python
+
+WORKDIR /w
 
 # 匯出：feature-extraction
 # 產出到 /out/onnx-e5
-COPY export_model_docker.py /w/export_model_docker.py
-RUN python /w/export_model_docker.py
+RUN --mount=type=bind,target=export_model_docker.py,src=export_model_docker.py \
+	python export_model_docker.py
 
 # ====== Builder ======
 FROM golang:1.25.4-bookworm AS builder
 WORKDIR /go/src/app
 
-COPY go.mod go.sum ./
-RUN go mod download
+RUN --mount=type=bind,target=go.mod,src=go.mod \
+	--mount=type=bind,target=go.sum,src=go.sum \
+	go mod download
 
 # 複製程式碼並建置
 COPY . .

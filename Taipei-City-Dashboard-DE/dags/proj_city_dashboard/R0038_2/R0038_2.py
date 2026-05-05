@@ -46,16 +46,16 @@ def _R0038_2(**kwargs):
             sql = f"""
                 INSERT INTO {default_table} (name, visibility, description, snippet, update_at, geom)
                 VALUES (
-                    '{gdata['name'][i]}',
+                    '{gdata["name"][i]}',
                     1,
-                    '{gdata['description'][i]}',
-                    '{gdata['snippet'][i]}',
+                    '{gdata["description"][i]}',
+                    '{gdata["snippet"][i]}',
                     current_timestamp,
-                    ST_geomfromtext('{gdata['geom'][i]}')
+                    ST_geomfromtext('{gdata["geom"][i]}')
                 )
                 ON CONFLICT (name)
                 DO
-                    UPDATE SET description='{gdata['description'][i]}', update_at=current_timestamp;
+                    UPDATE SET description='{gdata["description"][i]}', update_at=current_timestamp;
             """
             conn.execute(sql)
         print(f"{default_table} update successful")

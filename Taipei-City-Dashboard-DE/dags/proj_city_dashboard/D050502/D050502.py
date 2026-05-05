@@ -30,10 +30,7 @@ def _D050502(**kwargs):
 
     # Extract
     url = "https://data.moenv.gov.tw/api/v2/aqx_p_432"
-    params = {
-        "api_key": api_key,
-        "format": "JSON"
-    }
+    params = {"api_key": api_key, "format": "JSON"}
 
     # Default to secure TLS verification; allow overriding for constrained runtimes.
     verify_ssl_env = os.getenv("MOENV_VERIFY_SSL", "true").strip().lower()
@@ -59,7 +56,7 @@ def _D050502(**kwargs):
         raise TypeError(f"Unexpected response JSON type: {type(res).__name__}")
 
     raw_data = pd.DataFrame(records)
-    data = raw_data[raw_data['county'].isin(['臺北市', '新北市'])]
+    data = raw_data[raw_data["county"].isin(["臺北市", "新北市"])]
 
     # Rename
     data = data.rename(
@@ -91,7 +88,7 @@ def _D050502(**kwargs):
         }
     )
     # Filter for Taipei and New Taipei
-    
+
     # define data type
     data["site_id"] = pd.to_numeric(data["site_id"]).astype(int)
     float_cols = [

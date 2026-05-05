@@ -32,10 +32,10 @@ def _cooling_point(**kwargs):
     history_table = dag_infos.get("ready_data_history_table")
     geometry_type = "Point"
     FROM_CRS = 4326
-    URL = 'https://data.taipei/api/frontstage/tpeod/dataset/resource.download?rid=ae7e5986-859d-4294-b289-7c1b2e7c23f1'
+    URL = "https://data.taipei/api/frontstage/tpeod/dataset/resource.download?rid=ae7e5986-859d-4294-b289-7c1b2e7c23f1"
     response = requests.get(URL, verify=False)
     # 讀取 CSV (Big5 編碼)
-    csv_text = response.content.decode('big5')
+    csv_text = response.content.decode("big5")
     raw_data = pd.read_csv(StringIO(csv_text))
     # Transform
     data = raw_data.copy()
@@ -72,13 +72,38 @@ def _cooling_point(**kwargs):
     data["longitude"] = pd.to_numeric(data["longitude"], errors="coerce")
     data["latitude"] = pd.to_numeric(data["latitude"], errors="coerce")
     data["data_time"] = get_tpe_now_time_str(is_with_tz=True)
-    
+
     # standardize geometry
     gdata = add_point_wkbgeometry_column_to_df(
         data, x=data["longitude"], y=data["latitude"], from_crs=FROM_CRS
     )
     # select column
-    ready_data = gdata[["data_time", "id", "location_type", "name", "area", "address", "longitude", "latitude", "localcall", "ext", "mobile", "contact_other", "open_time", "fan", "aircon", "toilet", "seat", "water_facility", "accessible_seat", "features", "note", "wkb_geometry"]]
+    ready_data = gdata[
+        [
+            "data_time",
+            "id",
+            "location_type",
+            "name",
+            "area",
+            "address",
+            "longitude",
+            "latitude",
+            "localcall",
+            "ext",
+            "mobile",
+            "contact_other",
+            "open_time",
+            "fan",
+            "aircon",
+            "toilet",
+            "seat",
+            "water_facility",
+            "accessible_seat",
+            "features",
+            "note",
+            "wkb_geometry",
+        ]
+    ]
 
     # Load
     engine = create_engine(ready_data_db_uri)

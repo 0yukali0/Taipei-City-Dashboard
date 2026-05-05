@@ -2,12 +2,13 @@ from airflow import DAG
 from operators.common_pipeline import CommonDag
 import pandas as pd
 
+
 def format_minguo_date(series: pd.Series) -> pd.Series:
     def convert(date_str: str) -> str:
         year, month, day = date_str.split("/")
         year = year.zfill(3)  # 年份補齊成三位數
         return f"{year}{month}{day}"
-    
+
     return series.astype(str).map(convert)
 
 
@@ -75,12 +76,41 @@ def _R0040(**kwargs):
     )
     # geometry
     gdata = convert_geometry_to_wkbgeometry(gdata, from_crs=FROM_CRS)
-    ready_data = gdata.drop(columns=["geometry","positions_type"])
-    ready_data['st_no'] = None
-    ready_data = ready_data[['ac_no', 'st_no', 'sno', 'appmode', 'x', 'y', 'apptime', 'app_name', 'c_name',
-        'addr', 'cb_da', 'ce_da', 'co_ti', 'tc_na', 'tc_ma', 'tc_tl', 'tc_ma3',
-        'tc_tl3', 'npurp', 'dtype', 'dlen', 'positions', 'wkb_geometry',
-        'cb_ad', 'cd_ad', 'apptime_ad', 'isblock', 'isstay', 'planb']]
+    ready_data = gdata.drop(columns=["geometry", "positions_type"])
+    ready_data["st_no"] = None
+    ready_data = ready_data[
+        [
+            "ac_no",
+            "st_no",
+            "sno",
+            "appmode",
+            "x",
+            "y",
+            "apptime",
+            "app_name",
+            "c_name",
+            "addr",
+            "cb_da",
+            "ce_da",
+            "co_ti",
+            "tc_na",
+            "tc_ma",
+            "tc_tl",
+            "tc_ma3",
+            "tc_tl3",
+            "npurp",
+            "dtype",
+            "dlen",
+            "positions",
+            "wkb_geometry",
+            "cb_ad",
+            "cd_ad",
+            "apptime_ad",
+            "isblock",
+            "isstay",
+            "planb",
+        ]
+    ]
 
     # Load
     engine = create_engine(ready_data_db_uri)

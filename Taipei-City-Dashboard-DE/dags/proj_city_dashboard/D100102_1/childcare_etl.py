@@ -1,6 +1,7 @@
 from airflow import DAG
 from operators.common_pipeline import CommonDag
 
+
 def childcare_etl(rid, page_id, **kwargs):
     """
     只入庫指定欄位：
@@ -14,6 +15,7 @@ def childcare_etl(rid, page_id, **kwargs):
     import io
     import requests
     import urllib3
+
     urllib3.disable_warnings()
     from utils.extract_stage import (
         get_data_taipei_api,
@@ -105,14 +107,21 @@ def childcare_etl(rid, page_id, **kwargs):
         addr_cleaned = clean_data(addr)
         standard_addr_list = main_process(addr_cleaned)
         _, std_addr = save_data(addr, addr_cleaned, standard_addr_list)
-        df["address"] = std_addr.astype(str).str.replace(r"\s+$", "", regex=True).str.replace("\n", "").str.strip()
+        df["address"] = (
+            std_addr.astype(str)
+            .str.replace(r"\s+$", "", regex=True)
+            .str.replace("\n", "")
+            .str.strip()
+        )
     else:
         df["address"] = None
 
     # 5) 行政區萃取（優先抓「..區」，否則保底取第 4~6 字）
     if df["address"].notna().any():
         town_extracted = df["address"].str.extract(r"(..區)")[0]
-        df["town"] = town_extracted.where(town_extracted.notna(), df["address"].str[3:6])
+        df["town"] = town_extracted.where(
+            town_extracted.notna(), df["address"].str[3:6]
+        )
     else:
         df["town"] = None
 
@@ -127,15 +136,37 @@ def childcare_etl(rid, page_id, **kwargs):
         df["lng"], df["lat"] = None, None
 
     # 8) 幾何欄位（WKB, SRID=4326）
-    gdf = add_point_wkbgeometry_column_to_df(df, x=df["lng"], y=df["lat"], from_crs=from_crs)
+    gdf = add_point_wkbgeometry_column_to_df(
+        df, x=df["lng"], y=df["lat"], from_crs=from_crs
+    )
 
     # 9) 僅留最終入庫欄位（白名單）
-    final_cols = ["type", "name", "address", "phone", "data_time", "town", "wkb_geometry"]
+    final_cols = [
+        "type",
+        "name",
+        "address",
+        "phone",
+        "data_time",
+        "town",
+        "wkb_geometry",
+    ]
     # 9b) 截斷字串欄位長度,對齊 DB schema(name/phone varchar(50) 等)
     if "name" in gdf.columns:
-        gdf["name"] = gdf["name"].astype(str).str.replace(r"\s+", " ", regex=True).str.strip().str[:50]
+        gdf["name"] = (
+            gdf["name"]
+            .astype(str)
+            .str.replace(r"\s+", " ", regex=True)
+            .str.strip()
+            .str[:50]
+        )
     if "phone" in gdf.columns:
-        gdf["phone"] = gdf["phone"].astype(str).str.replace(r"\s+", " ", regex=True).str.strip().str[:50]
+        gdf["phone"] = (
+            gdf["phone"]
+            .astype(str)
+            .str.replace(r"\s+", " ", regex=True)
+            .str.strip()
+            .str[:50]
+        )
     for col in final_cols:
         if col not in gdf.columns:
             gdf[col] = None
@@ -157,4 +188,3 @@ def childcare_etl(rid, page_id, **kwargs):
     update_lasttime_in_data_to_dataset_info(
         engine, airflow_dag_id=dag_id, lasttime_in_data=lasttime_in_data
     )
-

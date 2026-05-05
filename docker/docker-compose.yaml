@@ -9,8 +9,8 @@ services:
       - ./nginx/conf.d:/etc/nginx/conf.d
       - ./nginx/ssl:/etc/nginx/ssl
     ports:
-      - 80:80
-      - 443:443
+      - 30080:80
+      - 30443:443
 
   dashboard-fe:
     image: node:${NODE_IMAGE_TAG:-latest}

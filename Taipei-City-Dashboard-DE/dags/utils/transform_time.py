@@ -296,7 +296,7 @@ def convert_roc_date(roc_date_str):
     其中日固定為 1 號，時間固定為 00:00:00。
     """
     # 利用正則表達式抓出民國年份與月份
-    m = re.match(r'(\d+)年(\d+)月', roc_date_str)
+    m = re.match(r"(\d+)年(\d+)月", roc_date_str)
     if m:
         roc_year = int(m.group(1))
         month = int(m.group(2))
@@ -305,7 +305,7 @@ def convert_roc_date(roc_date_str):
         # 利用 pd.Timestamp 建立日期物件
         dt = pd.Timestamp(year=ad_year, month=month, day=1, hour=0, minute=0, second=0)
         # 轉換為指定格式的字串
-        return dt.strftime('%Y-%m-%d %H:%M:%S')
+        return dt.strftime("%Y-%m-%d %H:%M:%S")
     else:
         # 如果格式不符合，回傳 None 或其他預設值
         return None

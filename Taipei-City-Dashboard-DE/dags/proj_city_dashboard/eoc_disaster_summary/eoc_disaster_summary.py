@@ -3,7 +3,7 @@ from operators.common_pipeline import CommonDag
 
 
 def _transfer(**kwargs):
-    '''
+    """
     data example
     {
         "DPID": "290e30bb-d2b1-448d-8a51-0099a738734a",
@@ -18,26 +18,30 @@ def _transfer(**kwargs):
         "WGS84Y": 25.042028,
         "IsSerious": false
     }
-    '''
-    from utils.load_stage import save_geodataframe_to_postgresql,update_lasttime_in_data_to_dataset_info
+    """
+    from utils.load_stage import (
+        save_geodataframe_to_postgresql,
+        update_lasttime_in_data_to_dataset_info,
+    )
     from utils.transform_geometry import add_point_wkbgeometry_column_to_df
     from sqlalchemy import create_engine
     import pandas as pd
     import requests
     from utils.get_time import get_tpe_now_time_str
+
     # Config
     # Retrieve all kwargs automatically generated upon DAG initialization
     # raw_data_db_uri = kwargs.get('raw_data_db_uri')
     # data_folder = kwargs.get('data_folder')
-    ready_data_db_uri = kwargs.get('ready_data_db_uri')
+    ready_data_db_uri = kwargs.get("ready_data_db_uri")
     # Retrieve some essential args from `job_config.json`.
-    dag_infos = kwargs.get('dag_infos')
-    dag_id = dag_infos.get('dag_id')
-    load_behavior = dag_infos.get('load_behavior')
-    default_table = dag_infos.get('ready_data_default_table')
-    history_table = dag_infos.get('ready_data_history_table')
-    URL = '''https://tfd.blob.core.windows.net/blobfs/data/TEST-T-TSAGEDisasterSummary.json'''
-    GEOMETRY_TYPE = "Point"   
+    dag_infos = kwargs.get("dag_infos")
+    dag_id = dag_infos.get("dag_id")
+    load_behavior = dag_infos.get("load_behavior")
+    default_table = dag_infos.get("ready_data_default_table")
+    history_table = dag_infos.get("ready_data_history_table")
+    URL = """https://tfd.blob.core.windows.net/blobfs/data/TEST-T-TSAGEDisasterSummary.json"""
+    GEOMETRY_TYPE = "Point"
     FROM_CRS = 4326
     raw_data = requests.get(URL)
     raw_data_json = raw_data.json()
@@ -57,22 +61,26 @@ def _transfer(**kwargs):
     data = df.copy()
     # Extract
 
-    data = data.rename(columns={
-        "DPID": "dpid",
-        "DPName": "dpname",
-        "CaseID": "caseid",
-        "CaseTime": "case_time",
-        "DisasterName": "pname",
-        "District": "case_location_district",
-        "Address": "case_location_description",
-        "CaseDesc": "case_description",
-        "ProcStatus": "case_complete",
-        "WGS84X": "lng",
-        "WGS84Y": "lat",
-        "IsSerious":"case_serious"
-        })
+    data = data.rename(
+        columns={
+            "DPID": "dpid",
+            "DPName": "dpname",
+            "CaseID": "caseid",
+            "CaseTime": "case_time",
+            "DisasterName": "pname",
+            "District": "case_location_district",
+            "Address": "case_location_description",
+            "CaseDesc": "case_description",
+            "ProcStatus": "case_complete",
+            "WGS84X": "lng",
+            "WGS84Y": "lat",
+            "IsSerious": "case_serious",
+        }
+    )
     # 將 case_complete 欄位的 True/False 轉換為中文
-    data["case_complete"] = data["case_complete"].map({True: "處理完成", False: "處理中"})
+    data["case_complete"] = data["case_complete"].map(
+        {True: "處理完成", False: "處理中"}
+    )
     # 新資料欄位可能沒有行政區 (District) 資訊，給定空字串避免後續操作失敗
     if "case_location_district" not in data.columns:
         data["case_location_district"] = ""
@@ -83,7 +91,7 @@ def _transfer(**kwargs):
         data, x=data["lng"], y=data["lat"], from_crs=FROM_CRS
     )
     # sele
-    gdata['data_time'] = get_tpe_now_time_str()
+    gdata["data_time"] = get_tpe_now_time_str()
     # Reshape
     ready_data = gdata.drop(columns=["geometry"])
     print(f"ready_data =========== {ready_data.columns}")
@@ -102,5 +110,6 @@ def _transfer(**kwargs):
     lasttime_in_data = ready_data["data_time"].max()
     update_lasttime_in_data_to_dataset_info(engine, dag_id, lasttime_in_data)
 
-dag = CommonDag(proj_folder='proj_city_dashboard', dag_folder='eoc_disaster_summary')
+
+dag = CommonDag(proj_folder="proj_city_dashboard", dag_folder="eoc_disaster_summary")
 dag.create_dag(etl_func=_transfer)
