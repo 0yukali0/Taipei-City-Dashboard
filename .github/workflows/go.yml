@@ -10,6 +10,21 @@ on:
     branches: ["main"]
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version: stable
+      - name: format
+        run: go fmt .
+        working-directory: ./Taipei-City-Dashboard-BE
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v9
+        with:
+          version: v2.11
+          working-directory: ./Taipei-City-Dashboard-BE
   build:
     runs-on: ubuntu-latest
     steps:
