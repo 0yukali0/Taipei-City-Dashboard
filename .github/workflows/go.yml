@@ -16,7 +16,8 @@ jobs:
       - uses: actions/checkout@v6
       - uses: actions/setup-go@v6
         with:
-          go-version: stable
+          go-version-file: .go_version
+          check-latest: true
       - name: format
         run: go fmt .
         working-directory: ./Taipei-City-Dashboard-BE
@@ -28,15 +29,24 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-
-      - name: Set up Go
-        uses: actions/setup-go@v4
+      - uses: actions/checkout@v6
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Build an image from Dockerfile
+        uses: docker/build-push-action@v6
         with:
-          go-version: "1.21.x"
-      - name: Install dependencies
-        run: go get .
-        working-directory: ./Taipei-City-Dashboard-BE
-      - name: Build
-        run: go build -v ./...
-        working-directory: ./Taipei-City-Dashboard-BE
+          context: ./Taipei-City-Dashboard-BE
+          push: false
+          load: true
+          tags: docker.io/0yukali0/be:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: 'docker.io/0yukali0/be:${{ github.sha }}'
+          format: 'table'
+          exit-code: '1'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
